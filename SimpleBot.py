@@ -78,7 +78,6 @@ class SimpleBot(object):
         self.conn.send_loop()
     
     def parse_loop(self):
-        for channel in self.channels: [self.join(channel)]
         while True:            
             msg = self.conn.iqueue.get()
             
@@ -100,13 +99,17 @@ class SimpleBot(object):
             self.out.put([msg, prefix, command, params, nick, user, host,
                     paramlist, lastparam])
             if command == "PING":
-                self.cmd("PONG", paramlist)     
+                self.cmd("PONG", paramlist)
 
     def set_nick(self, nick):
         self.cmd("NICK", [nick])
 
     def join(self, channel):
         self.cmd("JOIN", [channel])
+
+    def parse_join(self):
+        sleep(10)
+        for channel in self.channels: [self.join(channel)]
 
     def cmd(self, command, params=None):
         if params:
@@ -119,8 +122,8 @@ class SimpleBot(object):
         self.conn.oqueue.put(str)
 
 if __name__ == "__main__":
-    bot = SimpleBot('98.143.155.75','Kaa', 6667, ['#voxinfinitus'])
+    bot = SimpleBot('98.143.155.75', 'Kaa', 6667, ['#voxinfinitus'])
     bot.connect()
-    # run 2 jobs in parallel
-    jobs = [gevent.spawn(bot.readi),gevent.spawn(bot.reado), gevent.spawn(bot.parse_loop)]    
+    # run jobs in parallel
+    jobs = [gevent.spawn(bot.readi),gevent.spawn(bot.reado),gevent.spawn(bot.parse_loop),gevent.spawn(bot.parse_join())]
     gevent.joinall(jobs)
