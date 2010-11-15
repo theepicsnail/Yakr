@@ -49,10 +49,11 @@ class tcp(object):
                 sent = self.socket.send(self.obuffer)
                 self.obuffer = self.obuffer[sent:]
 
-irc_prefix_rem = re.compile(r'(.*?) (.*?) (.*)').match
-irc_noprefix_rem = re.compile(r'()(.*?) (.*)').match
-irc_netmask_rem = re.compile(r':?([^!@]*)!?([^@]*)@?(.*)').match
-irc_param_ref = re.compile(r'(?:^|(?<= ))(:.*|[^ ]+)').findall
+class IRCEvent(object):
+    def __init__(self, hook, source, args):
+        self.hook = hook.lower()
+        self.source = source
+        self.args = args
 
 class IRC(object):
     "handles the IRC protocol"
@@ -63,10 +64,11 @@ class IRC(object):
         self.port = port
         self.channels = channels
         self.out = queue.Queue() # responses from the server
+        self.hooks = { "ping": self.pong, "396": self._396 }
         self.connect()
         
         # parallel event loop(s)
-        self.jobs = [gevent.spawn(self.parse_loop),gevent.spawn(self.parse_join)]
+        self.jobs = [gevent.spawn(self.parse_loop)]
         gevent.joinall(self.jobs)
 
     def create_connection(self):
@@ -81,28 +83,41 @@ class IRC(object):
                 ['pybot', "3", "*",'Python Bot'])
 
     def parse_loop(self):
-        while True:            
-            msg = self.conn.iqueue.get()
+        while True:
+            line = self.conn.iqueue.get()
+            trailing = ""
+            prefix = ""
             
-            if msg == StopIteration:
-                self.connect()
-                continue
+            if line[0] == ":":
+                line = line[1:].split(' ', 1)
+                prefix = line[0]
+                line = line[1]
             
-            if msg.startswith(":"):  # has a prefix
-                prefix, command, params = irc_prefix_rem(msg).groups()
-            else:
-                prefix, command, params = irc_noprefix_rem(msg).groups()
-            nick, user, host = irc_netmask_rem(prefix).groups()
-            paramlist = irc_param_ref(params)
-            lastparam = ""
-            if paramlist:
-                if paramlist[-1].startswith(':'):
-                    paramlist[-1] = paramlist[-1][1:]
-                lastparam = paramlist[-1]
-            self.out.put([msg, prefix, command, params, nick, user, host,
-                    paramlist, lastparam])
-            if command == "PING":
-                self.cmd("PONG", paramlist)
+            if " :" in line:
+                line = line.split(" :", 1)
+                trailing = line[1]
+                line = line[0]
+            args = line.split()
+            command = args.pop(0)
+            if trailing:
+                args.append(trailing)
+                
+            event = IRCEvent(command, prefix, args)
+            self.call_hook(event)
+
+    def set_hook(self, hook, func):
+        self.hooks[hook] = func
+        
+    def call_hook(self, event):
+        if event.hook in self.hooks:
+            self.hooks[event.hook](event)
+
+    def pong(self, event):
+        self.cmd("PONG", event.args)
+        
+    def _396(self, event):
+        for channel in self.channels:
+            self.join(channel)
 
     def set_nick(self, nick):
         self.cmd("NICK", [nick])
