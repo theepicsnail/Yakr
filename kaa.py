@@ -1,7 +1,6 @@
-import time
-
 import gevent
 from gevent import socket
+from gevent.ssl import wrap_socket
 from gevent import sleep
 from gevent import queue
 
@@ -30,7 +29,6 @@ class tcp(object):
         return self.socket.recv(nbytes)
     
     def recv_loop(self):
-        last_timestamp = time.time()
         while True:
             data = self.recv_from_socket(4096)
             self.ibuffer += data
@@ -48,16 +46,29 @@ class tcp(object):
                 sent = self.socket.send(self.obuffer)
                 self.obuffer = self.obuffer[sent:]
 
+class ssl_tcp(tcp):
+    "ssl wrapper for TCP connections"
+
+    def __init__(self, host, port, timeout=300):
+        tcp.__init__(self, host, port, timeout)
+
+    def create_socket(self):
+        return wrap_socket(tcp.create_socket(self), server_side=False)
+
+    def recv_from_socket(self, nbytes):
+        return self.socket.read(nbytes)
+
 class IRC(object):
     "handles the IRC protocol"
 
-    def __init__(self, server, nick, port=6667, channels=['']):
+    def __init__(self, server, nick, port=6667, ssl=False, channels=['']):
         self.server = server
         self.nick = nick
         self.port = port
+        self.ssl = ssl
         self.channels = channels
         self.out = queue.Queue() # responses from the server
-        self.hooks = { "ping": self.pong, "396": self._396, "353": self._353, }
+        self.hooks = { "ping": self.pong, "396": self._396, }
         self.connect()
         
         # parallel event loop(s)
@@ -67,8 +78,14 @@ class IRC(object):
     def create_connection(self):
         return tcp(self.server, self.port)
 
+    def create_ssl_connection(self):
+        return ssl_tcp(self.server, self.port)
+
     def connect(self):
-        self.conn = self.create_connection()
+        if self.ssl is False:
+            self.conn = self.create_connection()
+        else:
+            self.conn = self.create_ssl_connection()
         gevent.spawn(self.conn.run)
         self.set_nick(self.nick)
         sleep(1)
@@ -115,11 +132,6 @@ class IRC(object):
         for channel in self.channels:
             self.join(channel)
 
-    def _353(self, event):
-        print "Starting to wait...."
-        sleep(15)
-        print "Waited all the 15 seconds, sir!"    
-
     def set_nick(self, nick):
         self.cmd("NICK", [nick])
 
@@ -144,4 +156,4 @@ class IRCEvent(object):
         self.timeout = timeout
 
 if __name__ == "__main__":
-    bot = IRC('irc.voxinfinitus.net', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
+    bot = IRC('irc.voxinfinitus.net', 'Kaa', 6697, True, ['#voxinfinitus','#landfill'])
