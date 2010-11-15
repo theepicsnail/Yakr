@@ -4,7 +4,6 @@ import time
 import gevent
 from gevent import socket
 from gevent import sleep
-from gevent import Timeout
 from gevent import queue
 
 class tcp(object):
@@ -100,7 +99,7 @@ class IRC(object):
             event = IRCEvent(command, prefix, args, 5)
             try:
                 t = gevent.with_timeout(event.timeout, self.call_hook, event)
-            except Timeout, t:
+            except gevent.Timeout, t:
                 pass
 
     def set_hook(self, hook, func):
