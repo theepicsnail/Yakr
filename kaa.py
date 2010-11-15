@@ -5,14 +5,14 @@ from gevent import sleep
 from gevent import queue
 
 class Tcp(object):
-    "handles TCP connections"
+    '''Handles TCP connections. Timeout is 300 secs.'''
 
     def __init__(self, host, port, timeout=300):
         self._ibuffer = ''
         self._obuffer = ''
         self.iqueue = queue.Queue()
         self.oqueue = queue.Queue()
-        self.socket = self._create_socket()
+        self._socket = self._create_socket()
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -21,15 +21,15 @@ class Tcp(object):
         return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
-        self.socket.connect((self.host, self.port))
+        self._socket.connect((self.host, self.port))
         gevent.spawn(self._recv_loop)
         gevent.spawn(self._send_loop)
 
     def disconnect(self):
-        self.socket.close()
+        self._socket.close()
 
     def _recv_from_socket(self, nbytes):
-        return self.socket.recv(nbytes)
+        return self._socket.recv(nbytes)
     
     def _recv_loop(self):
         while True:
@@ -46,11 +46,11 @@ class Tcp(object):
             print ">>> %r" % line
             self._obuffer += line.encode('utf-8', 'replace') + '\r\n'
             while self._obuffer:
-                sent = self.socket.send(self._obuffer)
+                sent = self._socket.send(self._obuffer)
                 self._obuffer = self._obuffer[sent:]
 
 class SslTcp(Tcp):
-    "ssl wrapper for TCP connections"
+    '''SSL wrapper for TCP connections. Timeout is 300 secs.'''
 
     def __init__(self, host, port, timeout=300):
         Tcp.__init__(self, host, port, timeout)
@@ -59,10 +59,10 @@ class SslTcp(Tcp):
         return wrap_socket(Tcp._create_socket(self), server_side=False)
 
     def _recv_from_socket(self, nbytes):
-        return self.socket.read(nbytes)
+        return self._socket.read(nbytes)
 
 class Irc(object):
-    "handles the IRC protocol"
+    '''Handles the IRC protocol. Pass true if using SSL.'''
 
     def __init__(self, server, nick, port=6667, ssl=False, channels=['']):
         self.server = server
@@ -92,7 +92,7 @@ class Irc(object):
         gevent.spawn(self.conn.connect)
         self._set_nick(self.nick)
         sleep(1)
-        self._cmd("USER",
+        self.cmd("USER",
                 ['pybot', "3", "*",'Python Bot'])
 
     def _parse_loop(self):
@@ -121,7 +121,7 @@ class Irc(object):
             except gevent.Timeout, t:
                 pass
 
-    def _set_hook(self, hook, func):
+    def set_hook(self, hook, func):
         self.hooks[hook] = func
         
     def _call_hook(self, event):
@@ -129,19 +129,19 @@ class Irc(object):
             self._hooks[event.hook](event)
 
     def _pong(self, event):
-        self._cmd("PONG", event.args)
+        self.cmd("PONG", event.args)
         
     def _396(self, event): # finished connecting, we can join
         for channel in self.channels:
             self._join(channel)
 
     def _set_nick(self, nick):
-        self._cmd("NICK", [nick])
+        self.cmd("NICK", [nick])
 
     def _join(self, channel):
-        self._cmd("JOIN", [channel])
+        self.cmd("JOIN", [channel])
 
-    def _cmd(self, command, params=None):
+    def cmd(self, command, params=None):
         if params:
             params[-1] = ':' + params[-1]
             self._send(command + ' ' + ' '.join(params))
