@@ -7,7 +7,7 @@ from gevent import sleep
 from gevent import queue
 
 class tcp(object):
-    'handles tcp connections'
+    "handles TCP connections"
 
     def __init__(self, host, port, timeout=300):
         self.ibuffer = ''
@@ -55,16 +55,17 @@ irc_netmask_rem = re.compile(r':?([^!@]*)!?([^@]*)@?(.*)').match
 irc_param_ref = re.compile(r'(?:^|(?<= ))(:.*|[^ ]+)').findall
 
 class IRC(object):
-    'handles the irc protocol'
+    "handles the IRC protocol"
 
     def __init__(self, server, nick, port=6667, channels=['']):
         self.server = server
         self.nick = nick
         self.port = port
         self.channels = channels
-        self.out = queue.Queue() #holds messages from server
+        self.out = queue.Queue() # responses from the server
         self.connect()
-
+        
+        # parallel event loop(s), use joinall()
         self.jobs = [gevent.spawn(self.parse_loop),gevent.spawn(self.parse_join)]
 
     def create_connection(self):
@@ -108,8 +109,8 @@ class IRC(object):
     def join(self, channel):
         self.cmd("JOIN", [channel])
 
-    def parse_join(self):
-        sleep(10)
+    def parse_join(self): # this is temporary
+        sleep(5)
         for channel in self.channels: [self.join(channel)]
 
     def cmd(self, command, params=None):
@@ -123,5 +124,5 @@ class IRC(object):
         self.conn.oqueue.put(str)
 
 if __name__ == "__main__":
-    bot = IRC('98.143.155.75', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
+    bot = IRC('irc.voxinfinitus.net', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
     gevent.joinall(bot.jobs)
