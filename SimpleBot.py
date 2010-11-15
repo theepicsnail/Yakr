@@ -65,8 +65,9 @@ class IRC(object):
         self.out = queue.Queue() # responses from the server
         self.connect()
         
-        # parallel event loop(s), use joinall()
+        # parallel event loop(s)
         self.jobs = [gevent.spawn(self.parse_loop),gevent.spawn(self.parse_join)]
+        gevent.joinall(self.jobs)
 
     def create_connection(self):
         return tcp(self.server, self.port)
@@ -110,7 +111,7 @@ class IRC(object):
         self.cmd("JOIN", [channel])
 
     def parse_join(self): # this is temporary
-        sleep(5)
+        sleep(3)
         for channel in self.channels: [self.join(channel)]
 
     def cmd(self, command, params=None):
@@ -125,4 +126,3 @@ class IRC(object):
 
 if __name__ == "__main__":
     bot = IRC('irc.voxinfinitus.net', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
-    gevent.joinall(bot.jobs)
