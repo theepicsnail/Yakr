@@ -65,7 +65,7 @@ class IRC(object):
         self.out = queue.Queue() #holds messages from server
         self.connect()
 
-        self.loop = [gevent.spawn(self.parse_loop)]
+        self.jobs = [gevent.spawn(self.parse_loop),gevent.spawn(self.parse_join)]
 
     def create_connection(self):
         return tcp(self.server, self.port)
@@ -124,4 +124,4 @@ class IRC(object):
 
 if __name__ == "__main__":
     bot = IRC('98.143.155.75', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
-    gevent.joinall(bot.loop)
+    gevent.joinall(bot.jobs)
