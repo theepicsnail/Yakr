@@ -58,7 +58,7 @@ class IRC(object):
         self.port = port
         self.channels = channels
         self.out = queue.Queue() # responses from the server
-        self.hooks = { "ping": self.pong, "396": self._396 }
+        self.hooks = { "ping": self.pong, "396": self._396, "353": self._353, }
         self.connect()
         
         # parallel event loop(s)
@@ -96,8 +96,11 @@ class IRC(object):
             if trailing:
                 args.append(trailing)
                 
-            event = IRCEvent(command, prefix, args)
-            gevent.with_timeout(5, self.call_hook, event)
+            event = IRCEvent(command, prefix, args, 5)
+            try:
+                gevent.with_timeout(event.timeout, self.call_hook, event)
+            except:
+                pass
 
     def set_hook(self, hook, func):
         self.hooks[hook] = func
@@ -112,6 +115,11 @@ class IRC(object):
     def _396(self, event): # finished connecting, we can join
         for channel in self.channels:
             self.join(channel)
+
+    def _353(self, event):
+        print "Starting to wait...."
+        sleep(15)
+        print "Waited all the 15 seconds, sir!"    
 
     def set_nick(self, nick):
         self.cmd("NICK", [nick])
@@ -130,10 +138,11 @@ class IRC(object):
         self.conn.oqueue.put(str)
 
 class IRCEvent(object):
-    def __init__(self, hook, source, args):
+    def __init__(self, hook, source, args, timeout):
         self.hook = hook.lower()
         self.source = source
         self.args = args
+        self.timeout = timeout
 
 if __name__ == "__main__":
     bot = IRC('irc.voxinfinitus.net', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
