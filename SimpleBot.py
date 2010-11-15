@@ -20,10 +20,12 @@ class tcp(object):
         self.timeout = timeout
 
     def create_socket(self):
-        return socket.socket(socket.AF_INET, socket.TCP_NODELAY)
+        return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def run(self):
         self.socket.connect((self.host, self.port))
+        gevent.spawn(self.recv_loop)
+        gevent.spawn(self.send_loop)
 
     def recv_from_socket(self, nbytes):
         return self.socket.recv(nbytes)
@@ -52,31 +54,30 @@ irc_noprefix_rem = re.compile(r'()(.*?) (.*)').match
 irc_netmask_rem = re.compile(r':?([^!@]*)!?([^@]*)@?(.*)').match
 irc_param_ref = re.compile(r'(?:^|(?<= ))(:.*|[^ ]+)').findall
 
-class SimpleBot(object):
-    'A simple bot'
+class IRC(object):
+    'handles the irc protocol'
 
     def __init__(self, server, nick, port=6667, channels=['']):
         self.server = server
         self.nick = nick
         self.port = port
         self.channels = channels
-        self.conn = tcp(self.server, self.port)
-        self.out = queue.Queue()
+        self.out = queue.Queue() #holds messages from server
+        self.connect()
+
+        self.loop = [gevent.spawn(self.parse_loop)]
+
+    def create_connection(self):
+        return tcp(self.server, self.port)
 
     def connect(self):
-        self.conn.create_socket()
-        self.conn.run()
+        self.conn = self.create_connection()
+        gevent.spawn(self.conn.run)
         self.set_nick(self.nick)
         sleep(1)
         self.cmd("USER",
                 ['pybot', "3", "*",'Python Bot'])
 
-    def readi(self):
-        self.conn.recv_loop()
-    
-    def reado(self):
-        self.conn.send_loop()
-    
     def parse_loop(self):
         while True:            
             msg = self.conn.iqueue.get()
@@ -122,8 +123,5 @@ class SimpleBot(object):
         self.conn.oqueue.put(str)
 
 if __name__ == "__main__":
-    bot = SimpleBot('98.143.155.75', 'Kaa', 6667, ['#voxinfinitus'])
-    bot.connect()
-    # run jobs in parallel
-    jobs = [gevent.spawn(bot.readi),gevent.spawn(bot.reado),gevent.spawn(bot.parse_loop),gevent.spawn(bot.parse_join())]
-    gevent.joinall(jobs)
+    bot = IRC('98.143.155.75', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
+    gevent.joinall(bot.loop)
