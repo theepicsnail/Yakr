@@ -49,12 +49,6 @@ class tcp(object):
                 sent = self.socket.send(self.obuffer)
                 self.obuffer = self.obuffer[sent:]
 
-class IRCEvent(object):
-    def __init__(self, hook, source, args):
-        self.hook = hook.lower()
-        self.source = source
-        self.args = args
-
 class IRC(object):
     "handles the IRC protocol"
 
@@ -103,7 +97,7 @@ class IRC(object):
                 args.append(trailing)
                 
             event = IRCEvent(command, prefix, args)
-            self.call_hook(event)
+            gevent.with_timeout(5, self.call_hook, event)
 
     def set_hook(self, hook, func):
         self.hooks[hook] = func
@@ -115,7 +109,7 @@ class IRC(object):
     def pong(self, event):
         self.cmd("PONG", event.args)
         
-    def _396(self, event):
+    def _396(self, event): # finished connecting, we can join
         for channel in self.channels:
             self.join(channel)
 
@@ -124,10 +118,6 @@ class IRC(object):
 
     def join(self, channel):
         self.cmd("JOIN", [channel])
-
-    def parse_join(self): # this is temporary
-        sleep(3)
-        for channel in self.channels: [self.join(channel)]
 
     def cmd(self, command, params=None):
         if params:
@@ -138,6 +128,12 @@ class IRC(object):
             
     def send(self, str):
         self.conn.oqueue.put(str)
+
+class IRCEvent(object):
+    def __init__(self, hook, source, args):
+        self.hook = hook.lower()
+        self.source = source
+        self.args = args
 
 if __name__ == "__main__":
     bot = IRC('irc.voxinfinitus.net', 'Kaa', 6667, ['#voxinfinitus','#landfill'])
