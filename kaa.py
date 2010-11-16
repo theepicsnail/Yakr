@@ -5,7 +5,7 @@ from gevent import sleep
 from gevent import queue
 
 class Tcp(object):
-    '''Handles TCP connections. Timeout is 300 secs.'''
+    '''Handles TCP connections, `timeout` in secs.'''
 
     def __init__(self, host, port, timeout=300):
         self._ibuffer = ''
@@ -50,10 +50,7 @@ class Tcp(object):
                 self._obuffer = self._obuffer[sent:]
 
 class SslTcp(Tcp):
-    '''SSL wrapper for TCP connections. Timeout is 300 secs.'''
-
-    def __init__(self, host, port, timeout=300):
-        Tcp.__init__(self, host, port, timeout)
+    '''SSL wrapper for TCP connections.'''
 
     def _create_socket(self):
         return wrap_socket(Tcp._create_socket(self), server_side=False)
@@ -159,4 +156,8 @@ class IrcEvent(object):
         self.timeout = timeout
 
 if __name__ == "__main__":
-    bot = Irc('irc.voxinfinitus.net', 'Kaa', 6697, True, ['#voxinfinitus','#landfill'])
+    bot = lambda : Irc('irc.voxinfinitus.net', 'Kaa', 6697, True, ['#voxinfinitus','#landfill'])
+    another_bot = lambda : Irc('irc.freenode.net', 'Kaa', 6667, True, ['#landfill'])
+    
+    jobs = [gevent.spawn(bot),gevent.spawn(another_bot)]
+    gevent.joinall(jobs)
