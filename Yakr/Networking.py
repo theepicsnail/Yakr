@@ -2,6 +2,9 @@ import gevent
 from gevent import socket, queue
 from gevent.ssl import wrap_socket
 from Logger import logger
+'''
+https://gist.github.com/676306
+'''
 
 class Tcp(object):
     '''Handles TCP connections, `timeout` is in secs.'''
