@@ -4,7 +4,7 @@ from Logger import logger
 from Networking import *
 from Plugin import *
 from os import walk
-
+import Action
 class IrcNullMessage(Exception):
     pass
 
@@ -23,7 +23,7 @@ class Bot(object):
         self.lines = queue.Queue() # responses from the server
         self.logger = logger
         self.plugins = PluginManager(settings['pluginPath'])
-
+        Action.bot = self
     def start(self):
         gevent.spawn(self._start_plugins)
         self._connect() 
@@ -31,6 +31,15 @@ class Bot(object):
         
     def _start_plugins(self):
         self.plugins.autoload()
+        while True:
+            line = self.lines.get()
+            logger.debug("Plugin handle line: <{}>".format(len(self.plugins.plugins())))
+            for name,mod in self.plugins.plugins():
+                logger.debug("<{}> handle_line".format(name))
+                try:
+                    mod.handle_line(line)
+                except:
+                    logger.exception("Plugin threw an exception!\n{}\n{}".format(name,line))
         #load plugins
         #pull something from self.lines
             #Give that to each of the plugins
