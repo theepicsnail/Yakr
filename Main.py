@@ -4,8 +4,8 @@ if __name__ == '__main__':
     
     SETTINGS = {
         'server': 'udderweb.com', 
-        'nick': 'Kaa', 
-        'realname': 'Kaa the Python', 
+        'nick': 'Dot', 
+        'realname': 'Dot the bot', 
         'port': 6667, 
         'ssl': False, 
         'channels': ['#test'], 
