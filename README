@@ -4,3 +4,8 @@ This requires the gevent package to be installed. (http://www.gevent.org/)
 
 To start the bot:
 python Main.py
+
+During the process of creating plugins it may be useful to attempt to load plugins, to make sure they initialize.
+python Main.py PluginTest
+will create the plugin manager that Yakr uses, and attempt to load everything in the same way that Yakr uses. 
+WARNING: any actions that are fired won't work as there's no associated bot.
