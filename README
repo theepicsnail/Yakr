@@ -1,0 +1,6 @@
+Yakr is yet another IRC bot. This one is designed to be very thin, with the same plugability of Superbot and Superbot2.
+
+This requires the gevent package to be installed. (http://www.gevent.org/)
+
+To start the bot:
+python Main.py
