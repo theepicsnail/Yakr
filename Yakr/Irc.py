@@ -1,11 +1,11 @@
 import gevent
 from gevent import socket, queue
 from Logger import logger
-from Networking import *
-from Plugin import *
 from os import walk
+from Networking import *
 from Bot import *
 from Executor import *
+
 
 class IrcNullMessage(Exception):
     pass
@@ -13,7 +13,7 @@ class IrcNullMessage(Exception):
 
 class Bot(BotBase):
     '''Provides a basic interface to an IRC server.'''
-    
+
     def __init__(self, settings):
         self.server = settings['server']
         self.nickname = settings['nick']
@@ -22,20 +22,19 @@ class Bot(BotBase):
         self.ssl = settings['ssl']
         self.channels = settings['channels']
         self.line = {'prefix': '', 'command': '', 'args': ['', '']}
-        self.lines = queue.Queue() # reesponses from the server
-        self.commands = queue.Queue() 
+        self.lines = queue.Queue()  # reesponses from the server
+        self.commands = queue.Queue()
         self.logger = logger
-        self.executor = Executor(settings.get('executor',{}))
-        self.context = ['']*20 #how many messages to keep
+        self.executor = Executor(settings.get('executor', {}))
+        self.context = [''] * 20  # how many messages to keep
         self.commandLeader = ">"
-
 
     # BotBase functions {{{
     def connect(self):
-        self._connect() 
+        self._connect()
         gevent.spawn(self._command_processor)
         self._event_loop()
-         
+
     def quit(self):
         logger.info("Quitting.")
         self.conn.disconnect()
@@ -49,26 +48,27 @@ class Bot(BotBase):
 
     def msg(self, target, msg):
         self.cmd('PRIVMSG', (target + ' :' + msg))
-    def join(self,channel):
-        self.cmd('JOIN',channel)
-    def part(self,channel):
-        self.cmd('PART',channel)
+
+    def join(self, channel):
+        self.cmd('JOIN', channel)
+
+    def part(self, channel):
+        self.cmd('PART', channel)
     # }}}
 
     def _create_connection(self):
         transport = SslTcp if self.ssl else Tcp
         return transport(self.server, self.port)
-    
+
     def _connect(self):
         self.conn = self._create_connection()
         gevent.spawn(self.conn.connect)
         self.nick(self.nickname)
         self.cmd('USER', (self.nickname, ' 3 ', '* ', self.realname))
-    
-    
+
     def _parsemsg(self, s):
         '''
-        Breaks a message from an IRC server into its prefix, command, 
+        Breaks a message from an IRC server into its prefix, command,
         and arguments.
         '''
 
@@ -90,11 +90,11 @@ class Bot(BotBase):
 
         command = args.pop(0)
         return prefix, command, args
-    
+
     def _event_loop(self):
         '''
         The main event loop.
-        
+
         Data from the server is parsed here using `parsemsg`. Parsed events
         are put in the object's event queue, `self.events`.
         '''
@@ -103,9 +103,11 @@ class Bot(BotBase):
                 line = self.conn.iqueue.get()
                 logger.info(line)
                 prefix, command, args = self._parsemsg(line)
-                self.line = {'prefix': prefix, 'command': command, 'args': args}
+                self.line = {'prefix': prefix,
+                             'command': command,
+                             'args': args}
                 self.lines.put(self.line)
-                if command == '433': # nick in use
+                if command == '433':  # nick in use
                     self.nick = self.nick + '_'
                     self.nick(self.nick)
                     continue
@@ -117,15 +119,15 @@ class Bot(BotBase):
                     continue
                 if command == 'PRIVMSG':
                     if args[1].startswith(self.commandLeader):
-                        cmd = args[1].replace(self.commandLeader,"",1)
+                        cmd = args[1].replace(self.commandLeader, "", 1)
                         target = args[0]
                         if target == self.nickname:
                             target = prefix.split('!')[0]
-                        self.commands.put((target,cmd))
-                    
+                        self.commands.put((target, cmd))
+
         except:
             self.quit()
-    
+
     def _command_processor(self):
         '''
         Pull commands from the command queue and run them.
@@ -133,31 +135,26 @@ class Bot(BotBase):
         running = True
         while running:
             try:
-                target,command = self.commands.get()
+                target, command = self.commands.get()
                 resp = self.executor.execute(command)
-                self.msg(target,resp)
+                self.msg(target, resp)
             except gevent.GreenletExit:
                 running = False
             except Exception as exc:
                 import traceback
                 traceback.print_exc()
-
         return
-
 
     def _join_chans(self, channels):
         return [self.cmd('JOIN', channel) for channel in channels]
-    
-    
+
     def cmd(self, command, args, prefix=None):
-        
+
         if prefix:
             self._send(prefix + command + ' ' + ''.join(args))
         else:
             self._send(command + ' ' + ''.join(args))
-            
+
     def _send(self, s):
         logger.info(s)
         self.conn.oqueue.put(s)
-
-

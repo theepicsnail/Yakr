@@ -1,19 +1,26 @@
 from StringIO import StringIO
 import itertools
-def isplit(iterable,splitters):
+import os
+
+
+def isplit(iterable, splitters):
     """
         Splits a list by a set of tokens
         isplit([1, 2, None, 3, 4], (None,)) => [[1,2],[3,4]]
     """
-    #http://stackoverflow.com/questions/4322705/split-a-list-into-nested-lists-on-a-value
-    return [list(g) for k,g in itertools.groupby(iterable,lambda x:x in splitters) if not k]
+    #http://stackoverflow.com/questions/4322705/
+    #   split-a-list-into-nested-lists-on-a-value
+    return [list(g) for k, g in itertools.
+            groupby(iterable, lambda x: x in splitters) if not k]
+
 
 class Executor(object):
-    def __init__(self,settings):
+    def __init__(self, settings):
+        self.paths = settings.get('paths', ['bin'])
         print "Executor settings:"
         print settings
-    
-    def tokenize(self,line):#{{{
+
+    def tokenize(self, line):  # {{{
         """
             split line into a list of tokens
             replacing the pipe character with None
@@ -25,7 +32,7 @@ class Executor(object):
         """
         escapeChar = '\\'
         quoteChars = '"\''
-        delimiters  = ' '
+        delimiters = ' '
         pipe = '|'
         inEscape = False
         quoteStart = None
@@ -45,12 +52,12 @@ class Executor(object):
                 inEscape = True
                 continue
 
-            if quoteStart == None:
+            if quoteStart is None:
                 if char in quoteChars:
                     quoteStart = char
                     continue
 
-                if char in delimiters+pipe:
+                if char in delimiters + pipe:
                     if curToken:
                         yield curToken
                     curToken = ""
@@ -62,18 +69,22 @@ class Executor(object):
 
         if curToken:
             yield curToken
-    #}}}
+    # }}}
 
-    def search(self,prog):
+    def search(self, prog):  # {{{
         for p in self.paths:
-            pass
+            for (cur, dirs, files) in os.walk(p):
+                if prog in files:
+                    return cur
+                if prog + ".py" in files:
+                    return cur
         return None
+    # }}}
 
-
-    def execute(self, command):#{{{
+    def execute(self, command):  # {{{
         """
             Split apart a command and execute all the subcommands
-            linking their stdout to the nexts stdin. 
+            linking their stdout to the nexts stdin.
 
             "foo | bar | baz"
             will run foo, taking its stdout and putting it into bars stdin
@@ -84,37 +95,37 @@ class Executor(object):
         """
         parts = list(self.tokenize(command))
         # inputStream => prog1 => prog2 => prog3 => outputStream
-        commands = isplit(parts,(None,))
+        commands = isplit(parts, (None, ))
         error = ""
+
         for cmd in commands:
-            prog,argv = cmd[0],cmd[1:]
-            kind = search(prog)
-            if kind == None:
+            prog, argv = cmd[0], cmd[1:]
+            path = self.search(prog)
+            if path is None:
                 error = "Could not find '{}'".format(prog)
                 break
 
-            
-
-
         if error:
-            return StringIO(error)
+            return error
 
-        return None
+        return path
+    # }}}
 
-        return str(argvs) 
-    #}}}
+    def startProcess(self, argv, stdin):  # {{{
+        # p = subprocess.Popen(argv,stdin=subprocess.PIPE,
+        #                      stdout=subprocess.PIPE)
+        # p.stdin.write(foo)
+        # bar = p.stdout.read()
+        # def connectProcess(p1, p2):
+        #     outp = p1.stdout
+        #     inp  = p2.stdin
+        #     def streamReader(
+        #     gevent.spawn(streamReader,p1,p2)
+        # return process
+        pass
+    # }}}
 
-    def startProcess(self, argv, stdin):
-        
-        return process
-
-
-
-
-
-
-
-if __name__=="__main__":
+if __name__ == "__main__":
     e = Executor({})
     running = True
     while running:

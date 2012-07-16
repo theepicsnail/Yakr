@@ -11,6 +11,3 @@ logger.addHandler(ch)
 
 fh = logging.FileHandler("log")
 logger.addHandler(fh)
-
-
-
