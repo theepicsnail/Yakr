@@ -22,6 +22,12 @@ class Tcp(object):
         self.timeout = timeout
         self._socket = self._create_socket()
 
+    def get_input(self):
+        return self.iqueue
+
+    def get_output(self):
+        return self.oqueue
+
     def _create_socket(self):
         return socket.socket()
 
@@ -44,12 +50,12 @@ class Tcp(object):
             while '\r\n' in self._ibuffer:
                 line, self._ibuffer = self._ibuffer.split('\r\n', 1)
                 self.iqueue.put(line)
-
     def _send_loop(self):
         while True:
             line = self.oqueue.get().splitlines()[0][:500]
             self._obuffer += line.encode('utf-8', 'replace') + '\r\n'
             while self._obuffer:
+                print "<", self._obuffer
                 sent = self._socket.send(self._obuffer)
                 self._obuffer = self._obuffer[sent:]
 
@@ -59,3 +65,4 @@ class SslTcp(Tcp):
 
     def _create_socket(self):
         return wrap_socket(Tcp._create_socket(self), server_side=False)
+

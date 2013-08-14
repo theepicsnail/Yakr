@@ -3,15 +3,8 @@ from gevent import socket, queue
 from Logger import logger
 from os import walk
 from Networking import *
-from Bot import *
-from Executor import *
 
-
-class IrcNullMessage(Exception):
-    pass
-
-
-class Bot(BotBase):
+class RealBot:
     '''Provides a basic interface to an IRC server.'''
 
     def __init__(self, settings):
@@ -20,51 +13,28 @@ class Bot(BotBase):
         self.realname = settings['realname']
         self.port = settings['port']
         self.ssl = settings['ssl']
-        self.channels = settings['channels']
         self.line = {'prefix': '', 'command': '', 'args': ['', '']}
-        self.lines = queue.Queue()  # reesponses from the server
+        self.lines = queue.Queue()  # responses from the server
         self.commands = queue.Queue()
         self.logger = logger
-        self.executor = Executor(settings.get('executor', {}))
-        self.context = [''] * 20  # how many messages to keep
-        self.commandLeader = ">"
+        self.conn = None
+        self.eventLoop = None
 
-    # BotBase functions {{{
-    def connect(self):
-        self._connect()
-        gevent.spawn(self._command_processor)
-        self._event_loop()
-
-    def quit(self):
-        logger.info("Quitting.")
-        self.conn.disconnect()
-
-    def nick(self, newNick=None):
-        if newNick:
-            self.cmd('NICK', newNick)
-            self.nickname = newNick
-        else:
-            return self.nickname
-
-    def msg(self, target, msg):
-        self.cmd('PRIVMSG', (target + ' :' + msg))
-
-    def join(self, channel):
-        self.cmd('JOIN', channel)
-
-    def part(self, channel):
-        self.cmd('PART', channel)
-    # }}}
-
-    def _create_connection(self):
+    def start(self):
         transport = SslTcp if self.ssl else Tcp
-        return transport(self.server, self.port)
-
-    def _connect(self):
-        self.conn = self._create_connection()
+        self.conn = transport(self.server, self.port)
         gevent.spawn(self.conn.connect)
-        self.nick(self.nickname)
+
+        self.cmd('NICK', self.nickname)
         self.cmd('USER', (self.nickname, ' 3 ', '* ', self.realname))
+        gevent.spawn(self._command_processor)
+        self.eventLoop = gevent.spawn(self._event_loop)
+
+    def wait(self):
+      self.eventLoop.join()
+
+    def onReady(self):
+      pass
 
     def _parsemsg(self, s):
         '''
@@ -101,13 +71,14 @@ class Bot(BotBase):
         try:
             while True:
                 line = self.conn.iqueue.get()
-                logger.info(line)
+                logger.info("> " + line)
                 prefix, command, args = self._parsemsg(line)
                 self.line = {'prefix': prefix,
                              'command': command,
                              'args': args}
                 self.lines.put(self.line)
                 if command == '433':  # nick in use
+                    self.onNickCollision()
                     self.nick = self.nick + '_'
                     self.nick(self.nick)
                     continue
@@ -115,17 +86,13 @@ class Bot(BotBase):
                     self.cmd('PONG', args)
                     continue
                 if command == '001':
-                    self._join_chans(self.channels)
+                    self.onReady(self)
                     continue
-                if command == 'PRIVMSG':
-                    if args[1].startswith(self.commandLeader):
-                        cmd = args[1].replace(self.commandLeader, "", 1)
-                        target = args[0]
-                        if target == self.nickname:
-                            target = prefix.split('!')[0]
-                        self.commands.put((target, cmd))
 
-        except:
+#                self.commands.put((target, cmd))
+
+        except Exception as e:
+            logger.exception(e)
             self.quit()
 
     def _command_processor(self):
@@ -139,22 +106,17 @@ class Bot(BotBase):
                 resp = self.executor.execute(command)
                 self.msg(target, resp)
             except gevent.GreenletExit:
+                logger.info("command processor caught greenlet exit.")
                 running = False
             except Exception as exc:
+                logger.info("command processor caught exception.", exc)
                 import traceback
                 traceback.print_exc()
+        logger.info("command processor exited.")
+        
         return
 
-    def _join_chans(self, channels):
-        return [self.cmd('JOIN', channel) for channel in channels]
-
-    def cmd(self, command, args, prefix=None):
-
-        if prefix:
-            self._send(prefix + command + ' ' + ''.join(args))
-        else:
-            self._send(command + ' ' + ''.join(args))
-
-    def _send(self, s):
-        logger.info(s)
+    def cmd(self, command, args, prefix=""):
+        s = prefix + command + ' ' + ''.join(args)
+        logger.info("< " + s)
         self.conn.oqueue.put(s)
