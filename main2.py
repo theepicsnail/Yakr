@@ -1,7 +1,8 @@
 import multiprocessing
 import Queue
 import plugins
-#from bot import networking
+import select
+from yakr import network
 
 class Plugin():
     def __init__(self, name):
@@ -29,14 +30,28 @@ class Plugin():
         return self.read_pipe.get()
 
 p = Plugin("fortune")
-import time
-end = time.time() + 60
-while time.time() < end:
-    p.put("hello")
-    v = p.get()
-    if v is None:
-        print "Process interrupted"
-        break
-    print v
+write, read = network.simple_connect(("localhost", 6667))
+write.put("NICK Dot")
+write.put("USER Dot localhost localhost :foo bar")
+while True:
+    readable, _, _ = select.select([p.reader(), read._reader],[],[])
+    if read._reader in readable: #network has data
+        data = read.get()
+        if data.startswith("PING"):
+            p.put("PONG" + data[4:])
+        if data.startswith(":Dot MODE"):
+            p.put("JOIN #test")
+        if data is None:
+            print "End from net"
+            break
+        print ">", data
+        p.put(data)
+    if p.reader() in readable: # plugin has data
+        data = p.get()
+        if data is None:
+            print "End from plugin"
+            break
+        print "<", data
+        write.put(data)
+
 p.stop()
-time.sleep(10)
