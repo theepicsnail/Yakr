@@ -1,48 +1,42 @@
 """ Plugin base
+this provides all the functionality needed for a general plugin. 
 """
-import signal
-import sys
 
-DEFAULT_PREFIX = "!"
-_DATA_OUT = None
+#Override these functions in your plugin, or dont.
+def start():
+    pass
+def handle_line(line):
+    pass
+def ready():
+    pass
+def stop():
+    pass
 
-def signal_handler(signal, frame):
-    print "Plugin interrupted. Shutting down."
-    if _DATA_OUT is not None:
-        _DATA_OUT.put(None)
-    sys.exit(0)
+_out_queue = None
+def set_out_queue(queue):
+    global _out_queue
+    _out_queue = queue
 
-def load_plugin(plugin_name, (data_in, data_out)):
-    """Main entry point of plugins.
-    plugin_name - the plugin to load
-    data_in - read only multiprocessing connection
-    data_out - write only multiprocessing connection
-    """
-    plugin_module = getattr(__import__("plugins."+plugin_name), plugin_name)
-    global _DATA_OUT
-    _DATA_OUT = data_out
+def get_out_queue():
+    return _out_queue
 
-    signal.signal(signal.SIGINT, signal_handler)
-    
-    command = plugin_module.__dict__.get("COMMAND", None)
-    if command == True:
-        command = plugin_module.__name__.split(".",1)[1]
-
-    prefix = plugin_module.__dict__.get("PREFIX", DEFAULT_PREFIX)
-    print "command", command
-    print "prefix", prefix
-
-    while True:
-        data = data_in.get()
-        if data is None:
-            print "caught exit signal"
-            return
-
-        data_out.put(data)
-        print ">", data
+def join(room):
+    get_out_queue().put("JOIN " + room)
+def say(to, what):
+    get_out_queue().put("PRIVMSG " + to + " :" + what)
 
 
 
-def msg(who, what):
-    """ send a message to a channel or nick """
-    _DATA_OUT.send("PRIVMSG %s :%s" % (who, what))
+"""
+yakr/plugin.py
+starts the plugin in another process
+loads the module
+  module loads plugins/__init__.py
+
+
+
+
+
+
+"""
+

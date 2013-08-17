@@ -3,32 +3,10 @@ import Queue
 import plugins
 import select
 from yakr import network
+from yakr.plugin import Plugin
+from yakr.util import set_procname
 
-class Plugin():
-    def __init__(self, name):
-        self.read_pipe = multiprocessing.Queue(100)
-        self.write_pipe = multiprocessing.Queue(100)
-        self.proc = multiprocessing.Process(
-            target = plugins.load_plugin, 
-            args = (name, (self.write_pipe, self.read_pipe)))
-        self.proc.start()
-
-    def stop(self):
-        self.write_pipe.put(None)
-        self.write_pipe.close()
-
-    def reader(self):
-        return self.read_pipe._reader
-
-    def writer(self):
-        return self.read_pipe._reader
-
-    def put(self, line):
-        self.write_pipe.put(line)
-
-    def get(self):
-        return self.read_pipe.get()
-
+set_procname("yakr")
 p = Plugin("fortune")
 write, read = network.simple_connect(("localhost", 6667))
 write.put("NICK Dot")
@@ -38,14 +16,18 @@ while True:
     if read._reader in readable: #network has data
         data = read.get()
         if data.startswith("PING"):
-            p.put("PONG" + data[4:])
+            write.put("PONG" + data[4:])
+
         if data.startswith(":Dot MODE"):
-            p.put("JOIN #test")
+            p.put("::STATE:READY")
+
         if data is None:
             print "End from net"
             break
+
         print ">", data
         p.put(data)
+
     if p.reader() in readable: # plugin has data
         data = p.get()
         if data is None:

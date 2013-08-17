@@ -1,7 +1,7 @@
 """ networking process """
 import socket
 import select
-
+from util import named_runner 
 def _run(hostport, (read_queue, write_queue), delimiter="\r\n"):
     """
     the networking process's entry point
@@ -101,7 +101,7 @@ def simple_connect(hostport, delimiter = "\r\n"):
     queues = multiprocessing.Queue(100), multiprocessing.Queue(100)
     
     net_proc = multiprocessing.Process(
-        target=_run, 
+        target=named_runner(_run), 
         name="Net", 
         args=(hostport, queues, delimiter))
     net_proc.start()
