@@ -20,10 +20,17 @@ def set_out_queue(queue):
 def get_out_queue():
     return _out_queue
 
+def _send(line):
+    queue = get_out_queue()
+    if queue is None:
+        return
+    queue.put(line)
+
 def join(room):
-    get_out_queue().put("JOIN " + room)
+    _send("JOIN " + room)
+
 def say(to, what):
-    get_out_queue().put("PRIVMSG " + to + " :" + what)
+    _send("PRIVMSG " + to + " :" + what)
 
 
 
