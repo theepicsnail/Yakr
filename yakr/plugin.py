@@ -81,7 +81,7 @@ def _process_begin(plugin_name, (data_in, data_out)):
     data_out - put(...) only queue of irc lines (no \r\n needed)
     """
 
-    plugin_module = getattr(__import__("plugins."+plugin_name), plugin_name)
+    plugin_module = reduce(getattr, plugin_name.split("."), __import__("plugins."+plugin_name))
     """
     plugin_module should have the following methods:
     start() - called when the plugin should do it's setup/heavy lifting
@@ -121,7 +121,6 @@ def _process_begin(plugin_name, (data_in, data_out)):
             #consumed, and we're connected to the server. So we're... ready
             plugin_module.set_out_queue(data_out)
             plugin_module.ready()
-            print "Plugin_module", plugin_module, dir(plugin_module)
             #This isn't an IRC message, don't give it to handle_line
             continue
 

@@ -9,8 +9,11 @@ from yakr.bot import Bot
 set_procname("yakr")
 
 b = Bot(simple_connect(("localhost", 6667)))
-b.load("fortune")
-b.load("repeater")
+#b.load("fortune")
+#b.load("repeater")
+b.load("pluginTest")
+b.load("myPlugins.plugin1")
+b.load("myPlugins.plugin2")
 b.run()
 
 
