@@ -1,7 +1,9 @@
 from . import *
 
-def handle_line(line):
-    say("#test", line)
+@command("repeat")
+def repeat(who, what, where):
+    say(where, "Repeated: " + what)
+
 
 #from Yakr import Bot
 #print Bot
