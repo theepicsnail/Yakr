@@ -1,8 +1,8 @@
 """ networking process """
 import socket
 import select
-from util import named_runner 
-def _run(hostport, (read_queue, write_queue), delimiter="\r\n"):
+from .util import named_runner 
+def _run(hostport, read_queue_write_queue, delimiter="\r\n"):
     """
     the networking process's entry point
     hostport - tuple with the host (string) and port (int) - ex: ("localhost", 1234)
@@ -24,6 +24,7 @@ def _run(hostport, (read_queue, write_queue), delimiter="\r\n"):
     #pylint: disable=W0212 
     #reason: using _reader and _writer for select.select
 
+    read_queue, write_queue = read_queue_write_queue
     assert len(delimiter) != 0, "Can not have an empty delimiter"
 
     sock = _create_socket()
@@ -42,17 +43,21 @@ def _run(hostport, (read_queue, write_queue), delimiter="\r\n"):
                 [])
             #print readable, writable, exceptioned
             if sock in readable:
-                data = sock.recv(1024)
+                data = sock.recv(1024).decode("ascii")
+                if len(data) == 0:
+                    break
                 network_buffer += data
 
             if read_queue._reader in readable and sock in writable:
                 item = read_queue.get()
+                print("<", item)
                 if item is None:
                     break
-                sock.send(item + delimiter)
+                sock.send((item + delimiter).encode("ascii"))
 
             while write_queue._writer in writable and delimiter in network_buffer:
                 msg, network_buffer = network_buffer.split(delimiter, 1)
+                print(">" , msg)
                 write_queue.put(msg)
 
             if exceptioned:
@@ -150,7 +155,7 @@ def _exampleHttp():
         contentLength -= len(tmp)
         data += tmp
 
-    print data
+    print(data)
     write_queue.put(None)
 #    while True:
 #        print read_queue.get()

@@ -2,9 +2,13 @@
 plugin manager stores a map of all the loaded plugins and does some of the
 queue management.
 """
-from plugin import Plugin
+from .plugin import Plugin
 from select import select
-import Queue
+try:
+    import Queue
+except ImportError:
+    import queue as Queue
+
 class Bot(object):
 
     def __init__(self, network_queues):
@@ -19,9 +23,9 @@ class Bot(object):
 
     def load(self, plugin_name):
         """ Load a plugin """
-        print "load", plugin_name
-        if self.plugin_map.has_key(plugin_name):
-            print plugin_name, "already loaded"
+        print("load", plugin_name)
+        if plugin_name in self.plugin_map:
+            print(plugin_name, "already loaded")
             return
         plugin = Plugin(plugin_name)
 
@@ -33,9 +37,9 @@ class Bot(object):
 
     def unload(self, plugin_name):
         """ Unload a plugin """
-        print "unload", plugin_name
-        if not self.plugin_map.has_key(plugin_name):
-            print plugin_name, "not loaded"
+        print("unload", plugin_name)
+        if plugin_name not in self.plugin_map:
+            print(plugin_name, "not loaded")
             return
         plugin = self.plugin_map[plugin_name]
 
@@ -90,7 +94,7 @@ class Bot(object):
             try:
                 queue.put(None, False)
             except Queue.Full:
-                print "queue full during _stop"
+                print("queue full during _stop")
                 pass
 
     def _ready(self):

@@ -3,9 +3,12 @@ the class Plugin is used by the main process as a handle on the launched
 plugins. Plugins are started in separate processes, this serves to do the
 launching though multiprocess, setting up pipes, etc..
 """
-from util import named_runner
+from .util import named_runner
 import multiprocessing
-import Queue
+try:
+    import Queue
+except ImportError:
+    import queue as Queue
 import signal 
 import sys
 
@@ -72,7 +75,7 @@ class Plugin:
             return False
 
 
-def _process_begin(plugin_name, (data_in, data_out)):
+def _process_begin(plugin_name, data_in_data_out):
     """
     When a new process is started to launch a plugin, this is the entry point.
 
@@ -80,8 +83,13 @@ def _process_begin(plugin_name, (data_in, data_out)):
     data_in -  get() only queue of irc lines (\r\n stripped)
     data_out - put(...) only queue of irc lines (no \r\n needed)
     """
+    
+    plugin_module = __import__("plugins." + plugin_name)
 
-    plugin_module = reduce(getattr, plugin_name.split("."), __import__("plugins."+plugin_name))
+    #foo.bar.baz we want a handle on 'baz', not 'plugins'
+    for sub_module in plugin_name.split("."):
+        plugin_module = getattr(plugin_module, sub_module)
+
     """
     plugin_module should have the following methods:
     start() - called when the plugin should do it's setup/heavy lifting
@@ -112,6 +120,7 @@ def _process_begin(plugin_name, (data_in, data_out)):
     # out_queue is None here, to prevent any bot actions during start
     plugin_module.start()
 
+    data_in, data_out = data_in_data_out
     #Read data from the main process, handling state change and sental values 
     while True:
         data = data_in.get()

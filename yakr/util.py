@@ -10,7 +10,7 @@ def set_procname(newname):
     """
     libc = cdll.LoadLibrary('libc.so.6')    
     buff = create_string_buffer(len(newname) + 1)
-    buff.value = newname   
+    buff.value = newname.encode("ascii")
     libc.prctl(15, byref(buff), 0, 0, 0)
 
 
