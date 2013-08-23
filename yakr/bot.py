@@ -23,35 +23,32 @@ class Bot(object):
 
     def load(self, plugin_name):
         """ Load a plugin """
-        print("load", plugin_name)
         if plugin_name in self.plugin_map:
-            print(plugin_name, "already loaded")
-            return
+            return False
         plugin = Plugin(plugin_name)
-
         self.plugin_map[plugin_name] = plugin
         self.read_queues.append(plugin.reader())
         self.write_queues.append(plugin.writer())
         if self.ready:
             plugin.put("::STATE:READY")
+        return True
 
     def unload(self, plugin_name):
         """ Unload a plugin """
-        print("unload", plugin_name)
         if plugin_name not in self.plugin_map:
-            print(plugin_name, "not loaded")
-            return
+            return False
         plugin = self.plugin_map[plugin_name]
 
         self.read_queues.remove(plugin.reader())
         self.write_queues.remove(plugin.writer())
         plugin.stop()
         del self.plugin_map[plugin_name]
+        return True
 
     def cycle(self, plugin_name):
         """ Load a plugin, unloading first it if it exists. """
         self.unload(plugin_name)
-        self.load(plugin_name)
+        return self.load(plugin_name)
     
     def run(self):
         self.net_write.put("NICK " + self.nick)
@@ -77,8 +74,7 @@ class Bot(object):
 
                     if data.startswith("PING"):
                         self.net_write.put("PONG" + data[4:])
-
-                    if data.startswith(":%s MODE" % self.nick):
+                    if ("001 %s :" % self.nick) in data:
                         self._ready()
 
                     for queue in self.plugin_map.values():
@@ -90,12 +86,8 @@ class Bot(object):
                     self.net_write.put(data)
 
     def _stop(self):
-        for queue in self.write_queues:
-            try:
-                queue.put(None, False)
-            except Queue.Full:
-                print("queue full during _stop")
-                pass
+        for queue in self.plugin_map.values():
+            queue.put(None)
 
     def _ready(self):
         self.ready = True
