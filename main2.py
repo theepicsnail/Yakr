@@ -16,4 +16,5 @@ b.nick = nick
 b.real_name = name
 b.load("fortune")
 b.load("repeater")
+b.load("seeSelf")
 b.run()

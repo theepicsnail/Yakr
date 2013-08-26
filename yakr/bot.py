@@ -20,6 +20,7 @@ class Bot(object):
         self.read_queues = [self.net_read._reader]
         self.write_queues = [] #don't put self.net_write here.
         #because we'll iterate though this list to broadcast messages
+        self.output_listeners = []
 
     def load(self, plugin_name):
         """ Load a plugin """
@@ -38,6 +39,8 @@ class Bot(object):
         if plugin_name not in self.plugin_map:
             return False
         plugin = self.plugin_map[plugin_name]
+        if plugin in self.output_listeners:
+            self.output_listeners.remove(plugin)
 
         self.read_queues.remove(plugin.reader())
         self.write_queues.remove(plugin.writer())
@@ -80,9 +83,19 @@ class Bot(object):
                     for queue in self.plugin_map.values():
                         queue.put(data)
                 else: #plugin has data, put it in the net queue
+                    print "data from plugin:", data
                     if data is None:
                         self.unload(plugin_name)
                         continue
+                    if data.startswith("::RECEIVE_OUTPUT:"):
+                        print "Bot got ::RECEIVE_OUTPUT"
+                        if data.split(":")[-1] == "True":
+                            self.output_listeners.append(plugin)
+                        else:
+                            self.output_listeners.remove(plugin)
+                        continue
+                    for p in self.output_listeners:
+                        p.put(data)
                     self.net_write.put(data)
 
     def _stop(self):

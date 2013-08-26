@@ -22,6 +22,7 @@ def handle_line(line):
     """
     process_commands(line)
 
+
 def process_commands(line):
     match = re.match("^:(.*)!.*PRIVMSG (.*?) :(.*)", line)
     if match:
@@ -56,6 +57,8 @@ def join(room):
 def say(to, what):
     _send("PRIVMSG " + to + " :" + what)
 
+def receiveSelfOutput(b):
+    _send("::RECEIVE_OUTPUT:" + str(b))
 
 _commands = {}
 #command functions
