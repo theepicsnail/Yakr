@@ -50,14 +50,12 @@ def _run(hostport, read_queue_write_queue, delimiter="\r\n"):
 
             if read_queue._reader in readable and sock in writable:
                 item = read_queue.get()
-                print("<", item)
                 if item is None:
                     break
                 sock.send((item + delimiter).encode("ascii"))
 
             while write_queue._writer in writable and delimiter in network_buffer:
                 msg, network_buffer = network_buffer.split(delimiter, 1)
-                print(">" , msg)
                 write_queue.put(msg)
 
             if exceptioned:
@@ -111,7 +109,79 @@ def simple_connect(hostport, delimiter = "\r\n"):
         args=(hostport, queues, delimiter))
     net_proc.start()
     return queues 
-    
+   
+def _recorder(net_queues, bot_queues, file_name):
+    #net_queues = (queue net reads from, queue net writes to )
+    #                   /|\                      |
+    #                    |                      \|/
+    #bot_queues = (queue bot writes to,  queue bot reads from)
+    f = open(file_name, "w")
+    try:
+        while True:
+            readable, _, _ = select.select(
+                [net_queues[1]._reader, bot_queues[0]._reader],[],[],1)
+            if net_queues[1]._reader in readable:
+                data = net_queues[1].get()
+                f.write("> " + data + "\n")
+                bot_queues[1].put(data)
+
+            if bot_queues[0]._reader in readable:
+                data = bot_queues[0].get()
+                f.write("< " + data + "\n")
+                net_queues[0].put(data)
+    except:
+        import traceback
+        traceback.print_exc()
+    finally:
+        f.close()
+        
+    f.close()
+    pass
+def _replayer(bot_queues, file_name):
+    f = open(file_name, "r")
+    for line in f:
+        direction = line[0]
+        data = line[2:-1]
+        if direction == ">": #net to bot
+            bot_queues[1].put(data)
+        else:
+            new_data = bot_queues[0].get()
+            if data != new_data:
+                print("Replay difference:")
+                print("Old: %s" % data)
+                print("New: %s" % new_data)
+    f.close()
+    while True:
+        d = bot_queues[0].get()
+        if d == None:
+            return
+        print "New data:", d
+
+def record(net_queues, file_name):
+    import multiprocessing
+    recorded_queues = multiprocessing.Queue(100), multiprocessing.Queue(100) 
+    record_proc = multiprocessing.Process(
+        target=named_runner(_recorder),
+        name="Recorder",
+        args=(net_queues, recorded_queues, file_name))
+    record_proc.start()
+    return recorded_queues
+
+def replay(file_name):
+    import multiprocessing
+    replay_queues = multiprocessing.Queue(100), multiprocessing.Queue(100)
+    replay_proc = multiprocessing.Process(
+        target=named_runner(_replayer),
+        name="Replay",
+        args=(replay_queues, file_name))
+    replay_proc.start()
+    return replay_queues
+
+
+
+
+
+
 def _exampleIrc():
     """ example usage of this module """
 
