@@ -15,4 +15,5 @@ b = Bot(simple_connect((connect_host, connect_port)))
 b.nick = nick
 b.real_name = name
 b.load("fortune")
+b.load("repeater")
 b.run()

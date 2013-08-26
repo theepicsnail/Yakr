@@ -31,6 +31,7 @@ def process_commands(line):
         for hook, callback in _commands.items():
             hook_match = re.match(hook, msg)
             if hook_match:
+                msg = hook_match.group(1)
                 callback(sender, msg, dest)#, hook_match.groups())
 
 #queue stuff
@@ -59,6 +60,7 @@ def say(to, what):
 _commands = {}
 #command functions
 def command(trigger):
+    trigger = "^!" + trigger + " (.*)$"
     assert not _commands.has_key(trigger), "Multiple definitions of trigger:" + trigger
     def decorator(func):
         _commands[trigger] = func
