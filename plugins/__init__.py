@@ -21,7 +21,7 @@ def handle_line(line):
     :snail!snail@airc-BD88CA3C PRIVMSG #test :asdf
     """
     process_commands(line)
-
+    process_matches(line)
 
 def process_commands(line):
     match = re.match("^:(.*)!.*PRIVMSG (.*?) :(.*)", line)
@@ -34,7 +34,11 @@ def process_commands(line):
             if hook_match:
                 msg = hook_match.group(1)
                 callback(sender, msg, dest)#, hook_match.groups())
-
+def process_matches(line):
+    for match_re, func in _matches.items():
+        results = re.match(match_re, line)
+        if results:
+            func(results.groups())
 #queue stuff
 _out_queue = None
 def set_out_queue(queue):
@@ -70,6 +74,12 @@ def command(trigger):
         return func
     return decorator
 
+_matches = {}
+def match(trigger):
+    def decorator(func):
+        _matches[trigger] = func
+        return func
+    return decorator
 """
 yakr/plugin.py
 starts the plugin in another process
