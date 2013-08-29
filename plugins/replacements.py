@@ -2,7 +2,8 @@
 from . import *
 
 REPLACEMENT_MAP = {
-    "<3":u'{C5}♥{}'
+    "<3":u'{C5}♥{}',
+    "LOD":u'ಠ_ಠ'
 }
 
 
@@ -14,7 +15,12 @@ def privmsg(groups):
     for find, replace in REPLACEMENT_MAP.items():
         what = what.replace(find, replace)
 
-    if original != what:
+    if "\o/" in original:
+        spaces = [
+            " "*len(segment)
+            for segment in original.split("\o/")
+        ]
+        say(where, "YAY".join(spaces))
+        say(where, "/ \\".join(spaces))
+    elif original != what:
         say(where, what)
-
-
