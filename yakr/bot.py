@@ -2,6 +2,7 @@
 plugin manager stores a map of all the loaded plugins and does some of the
 queue management.
 """
+from .util import parse_colors
 from .plugin import Plugin
 from select import select
 try:
@@ -96,8 +97,7 @@ class Bot(object):
                         continue
                     for p in self.output_listeners:
                         p.put(data)
-                    self.net_write.put(data)
-
+                    self.net_write.put(parse_colors(data))
     def _stop(self):
         for queue in self.plugin_map.values():
             queue.put(None)

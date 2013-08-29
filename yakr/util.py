@@ -41,5 +41,34 @@ def named_runner(run):
 
         set_procname(multiprocessing.current_process().name)
         return run(*argv, **kwargs)
-
     return runner
+
+
+_03 = chr(3)
+_COLOR_MAP = {}
+
+_VALS = [str(n) for n in range(16)]
+#Build mappings
+for fg in _VALS:
+    for bg in _VALS:
+        _COLOR_MAP["C{},{}".format(fg, bg.zfill(2))] =\
+            _03 + fg +"," + bg
+for v in _VALS:
+    code = _03 + v.zfill(2)
+    _COLOR_MAP["C{}".format(v)] = code
+    _COLOR_MAP["C{},".format(v)] = code
+
+    code = _03 + "," + v.zfill(2)
+    _COLOR_MAP["C,{}".format(v)] = code
+
+
+_COLOR_MAP["C"] = chr(15)  #{C} = reset colors
+_COLOR_MAP[""] = chr(15)   #{} = reset colors
+_COLOR_MAP["B"] = chr(0x02)#{B} bold
+_COLOR_MAP["U"] = chr(0x1F)#{U} underline
+_COLOR_MAP["R"] = chr(0x12)#{R} reverse
+
+def parse_colors(line):
+    for code, replacement in _COLOR_MAP.items():
+        line = line.replace("{{{}}}".format(code), replacement)
+    return line
