@@ -29,5 +29,5 @@ b.real_name = name
 b.load("fortune")
 b.load("repeater")
 b.load("foobar")
-#b.load("seeSelf")
+b.load("date")
 b.run()

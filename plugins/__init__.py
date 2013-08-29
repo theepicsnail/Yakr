@@ -67,7 +67,7 @@ def receiveSelfOutput(b):
 _commands = {}
 #command functions
 def command(trigger):
-    trigger = "^!" + trigger + " (.*)$"
+    trigger = "^!" + trigger + " ?(.*?)$"
     assert not _commands.has_key(trigger), "Multiple definitions of trigger:" + trigger
     def decorator(func):
         _commands[trigger] = func
