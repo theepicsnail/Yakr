@@ -13,8 +13,6 @@ def down():
     global level
     level = (level + clen-1) %clen
 
-
-
 @command("colorize")
 def colorize(who, what, where):
     global level
@@ -37,3 +35,7 @@ def colorize(who, what, where):
             out += i
     say(where, out)
 
+
+@command("colors")
+def colors(who, what, where):
+    say(where, " ".join(["{C%s}%s"%(s,s) for s in range(16)]))
