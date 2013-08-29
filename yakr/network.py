@@ -43,7 +43,7 @@ def _run(hostport, read_queue_write_queue, delimiter="\r\n"):
                 [])
             #print readable, writable, exceptioned
             if sock in readable:
-                data = sock.recv(1024).decode("ascii")
+                data = sock.recv(1024).decode("utf-8")
                 if len(data) == 0:
                     break
                 network_buffer += data
@@ -52,7 +52,7 @@ def _run(hostport, read_queue_write_queue, delimiter="\r\n"):
                 item = read_queue.get()
                 if item is None:
                     break
-                sock.send((item + delimiter).encode("ascii"))
+                sock.send((item + delimiter).encode("utf-8"))
 
             while write_queue._writer in writable and delimiter in network_buffer:
                 msg, network_buffer = network_buffer.split(delimiter, 1)

@@ -51,8 +51,8 @@ _VALS = [str(n) for n in range(16)]
 #Build mappings
 for fg in _VALS:
     for bg in _VALS:
-        _COLOR_MAP["C{},{}".format(fg, bg.zfill(2))] =\
-            _03 + fg +"," + bg
+        _COLOR_MAP["C{},{}".format(fg, bg)] =\
+            _03 + fg +"," + bg.zfill(2)
 for v in _VALS:
     code = _03 + v.zfill(2)
     _COLOR_MAP["C{}".format(v)] = code
