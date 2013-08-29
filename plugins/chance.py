@@ -3,7 +3,7 @@ import random
 
 @command("choose")
 def choose(who, what, where):
-    say(where, random.choice(what.split("or")))
+    say(where, random.choice(what.split(" or ")))
 
 _MAGIC_8_OUTPUTS = [
     "As I see it, yes",
