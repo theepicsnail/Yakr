@@ -80,6 +80,11 @@ def match(trigger):
         _matches[trigger] = func
         return func
     return decorator
+
+def privmsg(func):
+    _commands["(.*)"]=func
+
+
 """
 yakr/plugin.py
 starts the plugin in another process
