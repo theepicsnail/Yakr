@@ -32,8 +32,8 @@ def process_commands(line):
         for hook, callback in _commands.items():
             hook_match = re.match(hook, msg)
             if hook_match:
-                msg = hook_match.group(1)
-                callback(sender, msg, dest)#, hook_match.groups())
+                m = hook_match.group(1)
+                callback(str(sender), m, dest)#, hook_match.groups())
 def process_matches(line):
     for match_re, func in _matches.items():
         results = re.match(match_re, line)
@@ -61,18 +61,25 @@ def join(room):
 def say(to, what):
     _send("PRIVMSG " + to + " :" + what.decode('utf-8'))
 
+def topic(room, text):
+    _send("TOPIC " + room +" :" + text.decode('utf-8'))
+
 def receiveSelfOutput(b):
     _send("::RECEIVE_OUTPUT:" + str(b))
 
-_commands = {}
 #command functions
+_command_prefix = "!"
+_commands = {}
 def command(trigger):
-    trigger = "^!" + trigger + " ?(.*?)$"
+    trigger = "^" + _command_prefix + trigger + " ?(.*?)$"
     assert not _commands.has_key(trigger), "Multiple definitions of trigger:" + trigger
     def decorator(func):
         _commands[trigger] = func
         return func
     return decorator
+def set_command_prefix(prefix):
+    global _command_prefix
+    _command_prefix = prefix
 
 _matches = {}
 def match(trigger):
