@@ -59,7 +59,7 @@ def join(room):
     _send("JOIN " + room)
 
 def say(to, what):
-    _send("PRIVMSG " + to + " :" + what)
+    _send("PRIVMSG " + to + " :" + what.decode('utf-8'))
 
 def receiveSelfOutput(b):
     _send("::RECEIVE_OUTPUT:" + str(b))
