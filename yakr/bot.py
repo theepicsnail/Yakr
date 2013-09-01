@@ -51,6 +51,8 @@ class Bot(object):
         return self.load(plugin_name)
     
     def get_readables(self):
+        # pylint: disable=W0212, C0301
+        #http://stackoverflow.com/questions/1123855/select-on-multiple-python-multiprocessing-queues
         return self.plugin_map.values() + [self.net_read._reader]
 
     def run(self):
@@ -60,12 +62,11 @@ class Bot(object):
 
         while True:
             readable, _, _ = select(self.get_readables(), [], [])
-
             for readable_fd in readable:
-                if readable_fd == self.net_read._reader:
-                    self.handle_net_read()
-                else:
+                if type(readable_fd) is Plugin:
                     self.handle_plugin_read(readable_fd)
+                else:
+                    self.handle_net_read()
 
     def handle_plugin_read(self, plugin):
         data = plugin.get()

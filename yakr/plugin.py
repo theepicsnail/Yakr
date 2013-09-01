@@ -12,7 +12,7 @@ except ImportError:
 import signal 
 import sys
 
-class Plugin:
+class Plugin(object):
     """
     Plugin class is used in the main process as a handle to keep track
     of the launched processes.
