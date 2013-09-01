@@ -39,7 +39,8 @@ class Plugin:
         """
         self.write_pipe.put(None)
         self.write_pipe.close()
-
+        self.proc.join(3)
+        self.proc.terminate()
     def reader(self):
         """ 
         Returns the underlying selectable object associated with the read queue
@@ -83,9 +84,12 @@ def _process_begin(plugin_name, data_in_data_out):
     data_in -  get() only queue of irc lines (\r\n stripped)
     data_out - put(...) only queue of irc lines (no \r\n needed)
     """
-    
-    plugin_module = __import__("plugins." + plugin_name)
-
+    try:
+        plugin_module = __import__("plugins." + plugin_name)
+    except:
+        import traceback
+        traceback.print_exc()
+        return
     #foo.bar.baz we want a handle on 'baz', not 'plugins'
     for sub_module in plugin_name.split("."):
         plugin_module = getattr(plugin_module, sub_module)
@@ -111,9 +115,11 @@ def _process_begin(plugin_name, data_in_data_out):
         TODO: schedule some forceful kill if plugin_module.stop doesn't return
         quickly.
         """
+        print "stop", plugin_name
         plugin_module.stop()
         data_out.put(None)
-        sys.exit(0)
+        import os
+        os._exit(0)
     signal.signal(signal.SIGINT, stop_plugin)
 
     # let the plugin doing any initialization
@@ -135,7 +141,7 @@ def _process_begin(plugin_name, data_in_data_out):
 
         if data is None: #end of queue signal from main process. end the plugin
             stop_plugin()
-            return
+            sys.exit(0)
 
         plugin_module.handle_line(data)
 

@@ -77,5 +77,5 @@ def alarm(who, what, where):
     if not alarm_time:
         say(where, "I couldn't figure out how to parse '%s'" % time_string)
         return
-    add_alarm(msg, where, alarm_time)
     say(where, "Scheduled for: %s" % alarm_time)
+    add_alarm(msg, where, alarm_time)

@@ -5,10 +5,13 @@ queue management.
 from .util import parse_colors
 from .plugin import Plugin
 from select import select
+import re
 try:
     import Queue
 except ImportError:
     import queue as Queue
+
+_NOTICE_RE = re.compile(":([^ ]+)![^ ]+ NOTICE [^ ]+ :([^ ]+) ?(.*)")
 
 class Bot(object):
 
@@ -75,12 +78,13 @@ class Bot(object):
                     if data is None:
                         self._stop()
                         return
-
                     if data.startswith("PING"):
                         self.net_write.put("PONG" + data[4:])
                     if ("001 %s :" % self.nick) in data:
                         self._ready()
-
+                    notice_action = _NOTICE_RE.match(data)
+                    if notice_action:
+                        self.on_notice_action(notice_action.groups())
                     for queue in self.plugin_map.values():
                         queue.put(data)
                 else: #plugin has data, put it in the net queue
@@ -96,6 +100,14 @@ class Bot(object):
                     for p in self.output_listeners:
                         p.put(data)
                     self.net_write.put(parse_colors(data))
+
+    def on_notice_action(self, notice_action):
+        print(notice_action)
+        _, action, args = notice_action
+        if action in ["load", "unload", "cycle"]:
+            plugins = args.split()
+            cb = getattr(self, action)
+            map(cb,plugins)
     def _stop(self):
         for queue in self.plugin_map.values():
             queue.put(None)
