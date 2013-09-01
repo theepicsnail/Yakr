@@ -41,4 +41,4 @@ def check_tell(who, what, where):
     ))
     for msg in msgs:
         say(where, msg)
-    del TELL_CACHE[who]
+    del TELL_CACHE[who.lower()]
