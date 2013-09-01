@@ -2,7 +2,7 @@ from . import *
 
 @command("repeat")
 def repeat(who, what, where):
-    say(where, who + " said " + what)
+    say(where, what)
 
 
 last = ""
