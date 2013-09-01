@@ -39,6 +39,10 @@ def start():
     load_alarms()
     schedule_alarm()
 
+def stop():
+    if _NEXT_ALARM:
+        _NEXT_ALARM.cancel()
+
 def schedule_alarm():
     global _NEXT_ALARM, _ALARM_CACHE
     if not _ALARM_CACHE:
