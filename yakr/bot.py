@@ -63,37 +63,46 @@ class Bot(object):
 
             for readable_fd in readable:
                 if readable_fd == self.net_read._reader:
-                    readable_queue = self.net_read
+                    self.handle_net_read()
                 else:
-                    readable_queue = readable_fd 
-                    # plugins provide the fineno interface, so fd is the plugin
-                data = readable_queue.get()
-                if readable_queue == self.net_read:
-                    if data is None:
-                        self._stop()
-                        return
-                    if data.startswith("PING"):
-                        self.net_write.put("PONG" + data[4:])
-                    if ("001 %s :" % self.nick) in data:
-                        self._ready()
-                    notice_action = _NOTICE_RE.match(data)
-                    if notice_action:
-                        self.on_notice_action(notice_action.groups())
-                    for queue in self.plugin_map.values():
-                        queue.put(data)
-                else: #plugin has data, put it in the net queue
-                    if data is None:
-                        self.unload(readable_queue.name)
-                        continue
-                    if data.startswith("::RECEIVE_OUTPUT:"):
-                        if data.split(":")[-1] == "True":
-                            self.output_listeners.append(readable_queue)
-                        else:
-                            self.output_listeners.remove(readable_queue)
-                        continue
-                    for p in self.output_listeners:
-                        p.put(data)
-                    self.net_write.put(parse_colors(data))
+                    self.handle_plugin_read(readable_fd)
+
+    def handle_plugin_read(self, plugin):
+        data = plugin.get()
+        if data is None:
+            self.unload(plugin.name)
+            return
+
+        if data.startswith("::RECEIVE_OUTPUT:"):
+            if data.split(":")[-1] == "True":
+                self.output_listeners.append(plugin)
+            else:
+                self.output_listeners.remove(plugin)
+            return
+
+        self.broadcast(data)
+
+    def broadcast(self, data):
+        #Raw line to any listeners
+        for out_queue in self.output_listeners:
+            out_queue.put(data)
+        #Parse it and send it to the net
+        self.net_write.put(parse_colors(data))
+
+    def handle_net_read(self):
+        data = self.net_read.get()
+        if data is None:
+            self._stop()
+            return
+        if data.startswith("PING"):
+            self.net_write.put("PONG" + data[4:])
+        if ("001 %s :" % self.nick) in data:
+            self._ready()
+        notice_action = _NOTICE_RE.match(data)
+        if notice_action:
+            self.on_notice_action(notice_action.groups())
+        for queue in self.plugin_map.values():
+            queue.put(data)
 
     def on_notice_action(self, notice_action):
         print(notice_action)
