@@ -1,4 +1,7 @@
 #!/usr/bin/python
+from . import *
+set_command_prefix("%")
+
 import collections
 import re
 import tokenize as tokenizer
@@ -8,7 +11,7 @@ import StringIO
 #Debugging Decorators {{{
 depth = 1 
 def tokenizeDebug(func):
-#    return func
+    return func
     def nfunc(self,tokens):
         global depth
         print tokens,
@@ -32,7 +35,7 @@ def tokenizeDebug(func):
     return nfunc
 
 def evalDebug(func):
-#    return func
+    return func
     def nfunc(self,scope):
         global depth
 
@@ -765,9 +768,10 @@ def includeMath(scope):
 
 
 scope = {}
-def on_load(bot):
+def start():
     global scope
     includeMath(scope)
+
 def clean(val):
     if type(val) == float:
         return round(val,15)
@@ -775,19 +779,14 @@ def clean(val):
         return "("+", ".join(map(lambda x:str(clean(x)),val))+")"
     return str(val)
 
-   
 
-def on_PRIVMSG(bot,sender,args):
-    line = args[1]
-    if line[0] != "%":
-        return
-
-    room = args[0]
+@command("")
+def do_math(who, what, where):
     response = ""
     try:
-        resp = Expression().parse(Tokenizer(line[1:])).evaluate(scope)
+        resp = Expression().parse(Tokenizer(what)).evaluate(scope)
         scope['_'] = resp
-        response = (sender.split("!")[0]+": {!s}").format(clean(resp))
+        response = "{}: {!s}".format(who, clean(resp))
     except Exception as e:
         try:
             errmsg = e.args[0]
@@ -797,18 +796,15 @@ def on_PRIVMSG(bot,sender,args):
         except:    
             response = str(e)
         
-    bot.say(room,response)
+    say(where,response)
         
-
-
-
-
-
-
 
 if __name__ == "__main__":#{{{
     scope = {}
     includeMath(scope)
+
+    print str(Expression().parse(Tokenizer("f(x)=(x^(2-1))")))
+
 
     i = raw_input("> ")
     while i:
@@ -832,5 +828,6 @@ if __name__ == "__main__":#{{{
             except:
                 raise 
         i = raw_input("> ")
-        
+
+    import pdb; pdb.set_trace()        
 #}}}
