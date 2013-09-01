@@ -1,35 +1,8 @@
 from . import *
 import urllib2
-import re, htmlentitydefs
-
+import re
+from yakr.util import unescape
 _URL_RE = "(https?[^\s]*)"
-
-##
-# Removes HTML or XML character references and entities from a text string.
-#
-# @param text The HTML (or XML) source text.
-# @return The plain text, as a Unicode string, if necessary.
-#http://effbot.org/zone/re-sub.htm#unescape-html
-def unescape(text):
-    def fixup(m):
-        text = m.group(0)
-        if text[:2] == "&#":
-            # character reference
-            try:
-                if text[:3] == "&#x":
-                    return unichr(int(text[3:-1], 16))
-                else:
-                    return unichr(int(text[2:-1]))
-            except ValueError:
-                pass
-        else:
-            # named entity
-            try:
-                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
-            except KeyError:
-                pass
-        return text # leave as is
-    return re.sub("&#?\w+;", fixup, text)
 
 @privmsg
 def title(who, what, where):
@@ -37,7 +10,6 @@ def title(who, what, where):
     if not res:
         return
     url = res.group(0)
-    print url
 
     content = urllib2.urlopen(url, None, 5).read(1024)
     if content.find("</title>") == -1:

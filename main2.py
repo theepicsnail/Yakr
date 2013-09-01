@@ -26,9 +26,26 @@ else:
 b = Bot(net)
 b.nick = nick
 b.real_name = name
-b.load("fortune")
-b.load("repeater")
-b.load("foobar")
-b.load("date")
-b.load("invite")
+plugins = """alarm
+chance
+colorize
+date
+fortune
+gayify
+google.define
+google.search
+google.youtube
+invite
+joiner
+m528
+maths
+numbers
+ping
+repeater
+replacements
+sed
+tell
+titles
+weather""".split("\n")
+map(b.load, plugins)
 b.run()

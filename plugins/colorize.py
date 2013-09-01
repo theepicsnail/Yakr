@@ -37,5 +37,5 @@ def colorize(who, what, where):
 
 
 @command("colors")
-def colors(who, what, where):
+def colors_cmd(who, what, where):
     say(where, " ".join(["{C%s}%s"%(s,s) for s in range(16)]))
