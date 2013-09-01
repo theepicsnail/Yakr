@@ -39,7 +39,6 @@ _LAST_TOPIC = ""
 def update_topic():
     global _LAST_TOPIC
     now = datetime.datetime.now()
-    print "Topic:", CACHE
     title = ""
     color = 2 
     for nick in CACHE:
@@ -66,7 +65,6 @@ def update_topic():
 def remove_stat(who, what, where):
     what = str(what)
     set_time = CACHE.get(who, {}).get(what, None)
-    print "set_time", set_time
     if set_time is None:
         say(where, "You don't have a timer for that!")
         return

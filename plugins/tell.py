@@ -9,7 +9,6 @@ def start():
     global TELL_CACHE
     try:
         TELL_CACHE = pickle.load(file(TELL_STORE))
-        print "loaded", TELL_CACHE
     except:
         TELL_CACHE = {}
 

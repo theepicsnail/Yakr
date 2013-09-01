@@ -84,12 +84,10 @@ class Bot(object):
                     for queue in self.plugin_map.values():
                         queue.put(data)
                 else: #plugin has data, put it in the net queue
-                    print "data from plugin:", data
                     if data is None:
                         self.unload(plugin_name)
                         continue
                     if data.startswith("::RECEIVE_OUTPUT:"):
-                        print "Bot got ::RECEIVE_OUTPUT"
                         if data.split(":")[-1] == "True":
                             self.output_listeners.append(plugin)
                         else:

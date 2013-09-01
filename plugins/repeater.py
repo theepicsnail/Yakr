@@ -9,7 +9,6 @@ last = ""
 @privmsg
 def check_duplicates(who, what, where):
     global last
-    print "check dups", last, what
     if what == last:
         say(where, what)
         last = ""
