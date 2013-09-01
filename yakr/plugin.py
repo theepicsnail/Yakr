@@ -19,6 +19,7 @@ class Plugin:
     """
 
     def __init__(self, name):
+        self.name = name
         self.read_pipe = multiprocessing.Queue(100)
         self.write_pipe = multiprocessing.Queue(100)
         self.proc = multiprocessing.Process(
@@ -41,17 +42,12 @@ class Plugin:
         self.write_pipe.close()
         self.proc.join(3)
         self.proc.terminate()
-    def reader(self):
+
+    def fileno(self):
         """ 
         Returns the underlying selectable object associated with the read queue
         """
-        return self.read_pipe._reader
-
-    def writer(self):
-        """ 
-        Returns the underlying selectable object associated with the write queue
-        """
-        return self.read_pipe._reader
+        return self.read_pipe._reader.fileno()
 
     def put(self, line):
         """

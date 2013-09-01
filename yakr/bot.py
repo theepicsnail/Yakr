@@ -21,9 +21,6 @@ class Bot(object):
         self.nick = "Dot"
         self.real_name = "Dot the bot"
         self.plugin_map = {}
-        self.read_queues = [self.net_read._reader]
-        self.write_queues = [] #don't put self.net_write here.
-        #because we'll iterate though this list to broadcast messages
         self.output_listeners = []
 
     def load(self, plugin_name):
@@ -32,8 +29,6 @@ class Bot(object):
             return False
         plugin = Plugin(plugin_name)
         self.plugin_map[plugin_name] = plugin
-        self.read_queues.append(plugin.reader())
-        self.write_queues.append(plugin.writer())
         if self.ready:
             plugin.put("::STATE:READY")
         return True
@@ -46,8 +41,6 @@ class Bot(object):
         if plugin in self.output_listeners:
             self.output_listeners.remove(plugin)
 
-        self.read_queues.remove(plugin.reader())
-        self.write_queues.remove(plugin.writer())
         plugin.stop()
         del self.plugin_map[plugin_name]
         return True
@@ -57,22 +50,23 @@ class Bot(object):
         self.unload(plugin_name)
         return self.load(plugin_name)
     
+    def get_readables(self):
+        return self.plugin_map.values() + [self.net_read._reader]
+
     def run(self):
         self.net_write.put("NICK " + self.nick)
         self.net_write.put("USER {} localhost localhost :{}"
             .format(self.nick, self.real_name))
 
         while True:
-            readable, _, _ = select(self.read_queues, [], [])
+            readable, _, _ = select(self.get_readables(), [], [])
+
             for readable_fd in readable:
-                plugin_name = ""
                 if readable_fd == self.net_read._reader:
                     readable_queue = self.net_read
                 else:
-                    for plugin_name, plugin in self.plugin_map.items():
-                        if readable_fd == plugin.reader():
-                            readable_queue = plugin
-                            break
+                    readable_queue = readable_fd 
+                    # plugins provide the fineno interface, so fd is the plugin
                 data = readable_queue.get()
                 if readable_queue == self.net_read:
                     if data is None:
@@ -89,13 +83,13 @@ class Bot(object):
                         queue.put(data)
                 else: #plugin has data, put it in the net queue
                     if data is None:
-                        self.unload(plugin_name)
+                        self.unload(readable_queue.name)
                         continue
                     if data.startswith("::RECEIVE_OUTPUT:"):
                         if data.split(":")[-1] == "True":
-                            self.output_listeners.append(plugin)
+                            self.output_listeners.append(readable_queue)
                         else:
-                            self.output_listeners.remove(plugin)
+                            self.output_listeners.remove(readable_queue)
                         continue
                     for p in self.output_listeners:
                         p.put(data)
@@ -103,11 +97,17 @@ class Bot(object):
 
     def on_notice_action(self, notice_action):
         print(notice_action)
-        _, action, args = notice_action
+        who, action, args = notice_action
         if action in ["load", "unload", "cycle"]:
             plugins = args.split()
             cb = getattr(self, action)
             map(cb,plugins)
+        elif action == "part":
+            rooms = args.split()
+            for room in rooms:
+                self.net_write.put("PART {} {}".format(
+                    ",".join(rooms),
+                    "Parted by " + who))
     def _stop(self):
         for queue in self.plugin_map.values():
             queue.put(None)
