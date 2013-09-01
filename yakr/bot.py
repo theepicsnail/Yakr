@@ -6,15 +6,11 @@ from .util import parse_colors
 from .plugin import Plugin
 from select import select
 import re
-try:
-    import Queue
-except ImportError:
-    import queue as Queue
 
 _NOTICE_RE = re.compile(":([^ ]+)![^ ]+ NOTICE [^ ]+ :([^ ]+) ?(.*)")
 
 class Bot(object):
-
+    """Yakr bot class. """
     def __init__(self, network_queues):
         self.net_write, self.net_read = network_queues
         self.ready = False
@@ -51,11 +47,13 @@ class Bot(object):
         return self.load(plugin_name)
     
     def get_readables(self):
+        """Get the list of readable queues"""
         # pylint: disable=W0212, C0301
         #http://stackoverflow.com/questions/1123855/select-on-multiple-python-multiprocessing-queues
         return self.plugin_map.values() + [self.net_read._reader]
 
     def run(self):
+        """main entry point of the bot"""
         self.net_write.put("NICK " + self.nick)
         self.net_write.put("USER {} localhost localhost :{}"
             .format(self.nick, self.real_name))
@@ -69,6 +67,7 @@ class Bot(object):
                     self.handle_net_read()
 
     def handle_plugin_read(self, plugin):
+        """Handle a plugin that is ready to read"""
         data = plugin.get()
         if data is None:
             self.unload(plugin.name)
@@ -84,6 +83,7 @@ class Bot(object):
         self.broadcast(data)
 
     def broadcast(self, data):
+        """Send a line to the net and all plugins interested"""
         #Raw line to any listeners
         for out_queue in self.output_listeners:
             out_queue.put(data)
@@ -91,6 +91,7 @@ class Bot(object):
         self.net_write.put(parse_colors(data))
 
     def handle_net_read(self):
+        """Handle when the net has data for the bot"""
         data = self.net_read.get()
         if data is None:
             self._stop()
@@ -106,23 +107,27 @@ class Bot(object):
             queue.put(data)
 
     def on_notice_action(self, notice_action):
-        print(notice_action)
+        """When the bot is sent a notice for action"""
         who, action, args = notice_action
         if action in ["load", "unload", "cycle"]:
             plugins = args.split()
-            cb = getattr(self, action)
-            map(cb,plugins)
+            callback = getattr(self, action)
+            for plugin_name in plugins:
+                callback(plugin_name)
+
         elif action == "part":
             rooms = args.split()
-            for room in rooms:
-                self.net_write.put("PART {} {}".format(
+            self.net_write.put("PART {} {}".format(
                     ",".join(rooms),
                     "Parted by " + who))
+
     def _stop(self):
+        """Send the stop signal to all of the plugins"""
         for queue in self.plugin_map.values():
             queue.put(None)
 
     def _ready(self):
+        """Send the ready signal to all of the plugins"""
         self.ready = True
         for queue in self.plugin_map.values():
             queue.put("::STATE:READY")
