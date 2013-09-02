@@ -7,7 +7,6 @@ KEY = file("weather_key").read().strip()
 
 def get_response(command):
     url = "http://api.wunderground.com/api/%s/%s.json" % (KEY, urllib2.quote(command))
-    print url
     json_string = urllib2.urlopen(url).read()
     return json.loads(json_string)
 
@@ -24,7 +23,9 @@ def current_weather(who, what, where):
 
         say(where, "States found: (%s)" % ", ".join(states))
         return
-
+    if "current_observation" not in weather:
+        say(where, "No weather there? wat.")
+        return
     obs = weather["current_observation"]
     output = obs["display_location"]["full"]
     output += ": " + obs["weather"]
