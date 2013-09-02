@@ -14,7 +14,9 @@ def get_response(command):
 def current_weather(who, what, where):
     weather = get_response("conditions/q/" + what.strip())
     if "results" in weather["response"]:
-        say(where, "I have multiple results for %s. Please specify state (or use zip)." % what)
+        say(where, "I have %s results for %s. Please be more specific. (use a zip?)" % (len(weather["response"]["results"]), what))
+        if str(weather["response"]["results"][0]["state"]) == "":
+            return
 
         states = [
             str(entry["state"])
