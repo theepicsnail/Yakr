@@ -26,7 +26,8 @@ else:
 b = Bot(net)
 b.nick = nick
 b.real_name = name
-plugins = """alarm
+plugins = """alias
+alarm
 chance
 colorize
 date

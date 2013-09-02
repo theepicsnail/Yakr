@@ -73,11 +73,17 @@ class Bot(object):
             self.unload(plugin.name)
             return
 
-        if data.startswith("::RECEIVE_OUTPUT:"):
-            if data.split(":")[-1] == "True":
-                self.output_listeners.append(plugin)
-            else:
-                self.output_listeners.remove(plugin)
+        if data.startswith("::"):
+            data = data[2:]
+            if data.startswith("RECEIVE_OUTPUT:"):
+                if data.split(":")[-1] == "True":
+                    self.output_listeners.append(plugin)
+                else:
+                    self.output_listeners.remove(plugin)
+            elif data.startswith("REPROCESS:"):
+                data = data[10:]
+                for queue in self.plugin_map.values():
+                    queue.put(data)
             return
 
         self.broadcast(data)

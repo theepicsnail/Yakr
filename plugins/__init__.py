@@ -67,6 +67,8 @@ def topic(room, text):
 def receiveSelfOutput(b):
     _send("::RECEIVE_OUTPUT:" + str(b))
 
+def think(irc_line):
+    _send("::REPROCESS:" + irc_line)
 #command functions
 _command_prefix = "!"
 _commands = {}
