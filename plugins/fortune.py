@@ -8,7 +8,7 @@ _ACTIVITY = False
 _MIN_WAIT = 10 * 60
 _MAX_WAIT = 60 * 60
 def get_fortune():
-    return re.sub("\W+", " ", 
+    return re.sub("\s+", " ", 
         subprocess.check_output(["fortune", "-s"]))
 
 @command("fortune")
