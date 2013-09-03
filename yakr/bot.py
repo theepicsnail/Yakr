@@ -114,6 +114,7 @@ class Bot(object):
 
     def on_notice_action(self, notice_action):
         """When the bot is sent a notice for action"""
+        print("Admin action: {}".format(notice_action))
         who, action, args = notice_action
         if action in ["load", "unload", "cycle"]:
             plugins = args.split()
