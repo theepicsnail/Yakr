@@ -17,7 +17,7 @@ def start():
     auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
     _API = tweepy.API(auth)
 
-@command("")
+@command("t")
 def manual_tweet(who, what, where):
     print who, what, where
     try:
