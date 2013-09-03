@@ -32,7 +32,7 @@ def process_commands(line):
         for hook, callback in _commands.items():
             hook_match = re.match(hook, msg)
             if hook_match:
-                m = hook_match.group(1)
+                m = hook_match.group(1).strip()
                 callback(str(sender), m, dest)#, hook_match.groups())
 def process_matches(line):
     for match_re, func in _matches.items():
@@ -69,11 +69,12 @@ def receiveSelfOutput(b):
 
 def think(irc_line):
     _send("::REPROCESS:" + irc_line)
+
 #command functions
 _command_prefix = "!"
 _commands = {}
 def command(trigger):
-    trigger = "^" + _command_prefix + trigger + " ?(.*?)$"
+    trigger = "^" + _command_prefix + trigger + "( .*?|)$"
     assert not _commands.has_key(trigger), "Multiple definitions of trigger:" + trigger
     def decorator(func):
         _commands[trigger] = func
