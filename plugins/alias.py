@@ -1,7 +1,13 @@
 from . import *
 import re
+
 set_command_prefix("@")
 _ALIASES = {}
+
+def start():
+    global _ALIASES
+    _ALIASES = 
+
 
 #!alias foo=!w 95134
 #!alias bar(baz)=@baz
@@ -15,8 +21,8 @@ _ALIASES = {}
 
 _ALIAS_RE = re.compile(
     "^"             #START
-    "([a-z]+)"      #required name (a-z)
-    "(\([a-z,]+\)|)"#optional arguments "(a,b,c)"
+    "([a-zA-Z]+)"      #required name (a-z)
+    "(\([a-zA-Z,]+\)|)"#optional arguments "(a,b,c)"
     "(=.+|)"        #optional assignment "=some command"
     "(.*?)"         #overflow, only invalid lines put data here
     "$")            #END
