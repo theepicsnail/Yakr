@@ -45,6 +45,7 @@ ping
 repeater
 replacements
 sed
+shortener
 tell
 titles
 weather""".split("\n")
