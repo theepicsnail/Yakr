@@ -10,8 +10,13 @@ def title(who, what, where):
     if not res:
         return
     url = res.group(0)
-
-    content = urllib2.urlopen(url, None, 5).read(4096)
+    try:
+        content = urllib2.urlopen(url, None, 5).read(4096)
+    except urllib2.HTTPError:
+        say(where, "Aww that website hates robots! ROBOT HATER!")
+        return
+    except Exception as e:
+        say(where, "O.o %r" % e.message )
     if content.find("</title>") == -1:
         return
     title_content = content.split("</title>")[0].split(">")[-1]
