@@ -47,7 +47,11 @@ def sed(who, what, where):
     working_line = None
     color_id = 0
     while extra:
-        delim, search, replace, opts, extra = re.search(_SED_REGEX, extra).groups()
+        match = re.search(_SED_REGEX, extra)
+        if not match:
+            say(where, "Invalid sed expression: " + extra)
+            return
+        delim, search, replace, opts, extra = match.groups()
 
         search_re = compile_re(search, opts)
 
