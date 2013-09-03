@@ -5,7 +5,7 @@ import threading
 
 set_command_prefix("\$")
 CACHE = None
-CHANNEL = "#test"
+CHANNEL = "#m528"
 _DB_FILE = "m528.db"
 
 def restrict_channel(func):
