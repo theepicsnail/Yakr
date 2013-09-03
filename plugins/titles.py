@@ -11,7 +11,7 @@ def title(who, what, where):
         return
     url = res.group(0)
 
-    content = urllib2.urlopen(url, None, 5).read(1024)
+    content = urllib2.urlopen(url, None, 5).read(4096)
     if content.find("</title>") == -1:
         return
     title_content = content.split("</title>")[0].split(">")[-1]
