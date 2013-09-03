@@ -126,7 +126,8 @@ class Bot(object):
             self.net_write.put("PART {} {}".format(
                     ",".join(rooms),
                     "Parted by " + who))
-
+        elif action == "quote":
+            self.net_write.put(args)
     def _stop(self):
         """Send the stop signal to all of the plugins"""
         for queue in self.plugin_map.values():
