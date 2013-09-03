@@ -80,6 +80,7 @@ def _process_begin(plugin_name, data_in_data_out):
     data_in -  get() only queue of irc lines (\r\n stripped)
     data_out - put(...) only queue of irc lines (no \r\n needed)
     """
+    print("starting {}".format(plugin_name))
     try:
         plugin_module = __import__("plugins." + plugin_name)
     except:
@@ -111,7 +112,7 @@ def _process_begin(plugin_name, data_in_data_out):
         TODO: schedule some forceful kill if plugin_module.stop doesn't return
         quickly.
         """
-        print "stop", plugin_name
+        print("stopping {}".format(plugin_name))
         plugin_module.stop()
         data_out.put(None)
         import os
@@ -139,5 +140,9 @@ def _process_begin(plugin_name, data_in_data_out):
             stop_plugin()
             sys.exit(0)
 
-        plugin_module.handle_line(data)
-
+        try:
+            plugin_module.handle_line(data)
+        except:
+            import traceback
+            traceback.print_exc()
+            
