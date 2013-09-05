@@ -333,7 +333,7 @@ class CommaExpression(ExpressionNode):#{{{
         return map(lambda x:x.evaluate(scope), self.exprs)
 
     def __str__(self):
-        return "("+",".join(map(str,self.exprs))+")"
+        return ",".join(map(str,self.exprs))
 #}}}
 
 class IfExpression(ExpressionNode):#{{{
@@ -389,7 +389,8 @@ class ComparisonExpression(ExpressionNode):#{{{
             "<":lambda x,y:x<y,
             "<=":lambda x,y:x<=y,
             ">":lambda x,y:x>y,
-            ">=":lambda x,y:x>=y
+            ">=":lambda x,y:x>=y,
+            "==":lambda x,y:x==y
         }
         pass
 
@@ -432,7 +433,7 @@ class ComparisonExpression(ExpressionNode):#{{{
     def performOp(self, left, op, right):
         return self.opDict[op](left,right)
     def __str__(self):
-        return "("+"".join(map(str,self.terms))+")"
+        return "".join(map(str,self.terms))
         
 #}}}
 
@@ -476,7 +477,7 @@ class AdditiveExpression(ExpressionNode):#{{{
         pass
 
     def __str__(self):
-        return "("+"".join(map(str,self.terms))+")"
+        return "".join(map(str,self.terms))
 #}}}
 
 class MultiplicativeExpression(ExpressionNode):#{{{
@@ -523,7 +524,7 @@ class MultiplicativeExpression(ExpressionNode):#{{{
                 print "Invalid operation:",op
         return res
     def __str__(self):
-        return "("+"".join(map(str,self.factors))+")"
+        return "".join(map(str,self.factors))
 #}}}
 
 class UnaryExpression(ExpressionNode):#{{{
@@ -549,7 +550,7 @@ class UnaryExpression(ExpressionNode):#{{{
         return self.val.evaluate(scope)
 
     def __str__(self):
-        return self.sign+"("+str(self.val)+")"
+        return self.sign+str(self.val)
 #}}}
 
 class PowerExpression(ExpressionNode):#{{{
@@ -579,7 +580,7 @@ class PowerExpression(ExpressionNode):#{{{
         return power(b,e) 
 
     def __str__(self):
-        return str(self.base)+"^("+str(self.exp)+")"
+        return str(self.base)+"^"+str(self.exp)
 #}}}
 
 class ValueExpression(ExpressionNode):#{{{
@@ -593,17 +594,17 @@ class ValueExpression(ExpressionNode):#{{{
         if self.atom == None:
             return
 
-        trailer = Trailer().parse(tokens)
+        trailer = SubExpression().parse(tokens)
         while trailer is not None:
             self.trailers.append(trailer)
-            trailer = Trailer().parse(tokens)
+            trailer = SubExpression().parse(tokens)
 
         if len(self.trailers) == 0:
             return self.atom
         return self
 
     def __str__(self):
-        return str(self.atom)+"("+(")(".join(map(str,self.trailers))+")" if self.trailers else "")
+        return str(self.atom) + "".join(map(str,self.trailers))
 
     @evalDebug
     def evaluate(self, scope):
@@ -637,17 +638,13 @@ class Atom(ExpressionNode):#{{{
             return self
        
         if op.tval == '(':
-            expr = Expression().parse(tokens)
+            tokens.unget()
+            expr = SubExpression().parse(tokens)
             if expr == None:
                 raise ParseException("Error parsing atom.")
-            if tokens.get().tval != ")":
-                raise ParseException("Expected )")
             return expr
 
         tokens.unget()
-#        if op.tval == ')':
-#            return CommaExpression() # Empty expression
-
         raise ParseException("Expected number, name, or sub expression",op)
 
     @evalDebug
@@ -664,42 +661,42 @@ class Atom(ExpressionNode):#{{{
         return self.num.tval if self.num is not None else self.var.tval
 #}}}
 
-class Trailer(ExpressionNode):#{{{
-    #This class has no evaluate function because a successful parse returns an Expression, not a Trailer.
+class SubExpression(ExpressionNode):
     def __init__(self):
-        self.arg = None
+        self.expr = None
+
     @tokenizeDebug
-    def parse(self,tokens):
+    def parse(self, tokens):
         op = tokens.get()
         if op.tval == "(":
             if tokens.get().tval == ")":
-                return CommaExpression()
+                self.expr = CommaExpression()
             else:
                 tokens.unget()
-            self.arg = CommaExpression().parse(tokens)
-            if tokens.get().tval != ")":
-                raise ParseException("Expected )")
-            return self.arg
+                self.expr = FunctionAssignmentExpression().parse(tokens)
+                if tokens.get().tval != ")":
+                    raise ParseException("Expected )")
+            return self
         tokens.unget()
-#}}}
+    @evalDebug
+    def evaluate(self, scope):
+        return self.expr.evaluate(scope)
+
+    def __str__(self):
+        return "(%s)" % self.expr
 
 class Expression(ExpressionNode): #{{{
     def __init__(self):
         pass
     @tokenizeDebug
-    def parse(self,tokens):
+    def parse(self, tokens):
         expr = FunctionAssignmentExpression().parse(tokens)
         n = tokens.get()
-        if n.tval in [')', 'else']:
-            tokens.unget()
-            return expr
-
         if n.ttype != 0:
             raise ParseException("Expected end of expression.",n)
         return expr
 #}}}
 
-#}}}
 class NativeFunction(FunctionAssignmentExpression):
     def __init__(self, name, args, func):
         self.funcName = name
@@ -783,6 +780,7 @@ def clean(val):
 @command("")
 def do_math(who, what, where):
     response = ""
+    print "Math:", what
     try:
         resp = Expression().parse(Tokenizer(what)).evaluate(scope)
         scope['_'] = resp
@@ -800,11 +798,9 @@ def do_math(who, what, where):
         
 
 if __name__ == "__main__":#{{{
+    exit(0)
     scope = {}
     includeMath(scope)
-
-    print str(Expression().parse(Tokenizer("f(x)=(x^(2-1))")))
-
 
     i = raw_input("> ")
     while i:
@@ -819,6 +815,7 @@ if __name__ == "__main__":#{{{
                     print "Evaluating"
                     val = ast.evaluate(scope)
                     print "=",clean(val)
+                    print "str:", str(ast)
                     scope['_']=val
             except (ParseException, EvaluatorException) as e:
                 print "Exception:",e.args[0]
@@ -829,5 +826,5 @@ if __name__ == "__main__":#{{{
                 raise 
         i = raw_input("> ")
 
-    import pdb; pdb.set_trace()        
+#    import pdb; pdb.set_trace()        
 #}}}
