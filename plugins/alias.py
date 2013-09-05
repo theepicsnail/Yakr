@@ -1,12 +1,19 @@
 from . import *
 import re
+import pickle
 
 set_command_prefix("@")
 _ALIASES = {}
+ALIAS_STORE = "Aliases.pkl"
 
 def start():
     global _ALIASES
-    _ALIASES = 
+    try:
+        _ALIASES = pickle.load(file(ALIAS_STORE))
+    except:
+        _ALIASES = {}
+def stop():
+    pickle.dump(_ALIASES, file(ALIAS_STORE,"w"))
 
 
 #!alias foo=!w 95134
