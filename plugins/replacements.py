@@ -3,7 +3,8 @@ from . import *
 
 REPLACEMENT_MAP = {
     "<3":u'{C5}♥{}',
-    "LOD":u'ಠ_ಠ'
+    "LOD":u'ಠ_ಠ',
+    "TABLEFLIP":u'(╯°□°）╯︵ ┻━┻)'
 }
 
 
