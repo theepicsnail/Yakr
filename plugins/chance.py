@@ -1,5 +1,6 @@
 from . import *
 import random
+import re
 
 @command("choose")
 def choose(who, what, where):
@@ -34,4 +35,77 @@ def magic8(who, what, where):
 
 @command("roll")
 def roll(who, what, where):
-    say(where, who +": "+ str(random.randint(1,6)))
+
+    if not what:
+        say(where, who +": "+ str(random.randint(1,6)))
+
+    else:
+        try:
+            roll_dict = re.match("(?P<dice>\d*)[dD](?P<sides>\d+)((?P<operator>[-+*/x])(?P<modifier>\d+))?", what).groupdict()
+        except AttributeError:
+            try:
+                roll_dict = re.match("(?P<dice>\d*)", what).groupdict()
+                roll_dict["sides"] = "6"
+            except AttributeError:
+                say(where, who + ": The syntax is [number of dice]d[number of sides per dice][modifier (-1, +2, *3, /4)]")
+            return
+        rollsults = []
+
+        if int(roll_dict["sides"]) > 1000000000:
+            say(where, who + ": I, uh...couldn't lift the die. O.o")
+            return
+
+        elif int(roll_dict["sides"]) < 2:
+            say(where, who + ": *tch* Come on, son!")
+            return
+
+        if roll_dict["dice"]:
+            if int(roll_dict["dice"]) < 1:
+                say(where, who + ": http://i.imgur.com/ckYyr4h.jpg")
+                return
+            if int(roll_dict["dice"]) > 30:
+                say(where, who + ": AIN'T NOBODY GOT TIME FOR THAT! Keep it under 30 dice. ;)")
+                return
+            for _ in xrange(int(roll_dict["dice"])):
+                rollsults.append(random.randint(1, int(roll_dict["sides"])))
+
+            rollsults.sort()
+            roll_total = sum(rollsults)
+
+        else:
+            rollsults.append(random.randint(1, int(roll_dict["sides"])))
+            roll_total = rollsults[0]
+            say(where, who + ": " + str(roll_total))
+            return
+
+        if roll_dict["operator"]:
+            roll_total = operators[roll_dict["operator"]](roll_total, int(roll_dict["modifier"]))
+
+        say(where, who + ": {} for a total of {}.".format(join(map(str, rollsults)), roll_total))
+        return
+
+def subtract(x, y):
+    return x - y
+
+def add(x, y):
+    return x + y
+
+def divide(x, y):
+    return x / y
+
+def multiply(x, y):
+    return x * y
+
+operators = {
+    "+": add,
+    "-": subtract,
+    "/": divide,
+    "*": multiply,
+    "x": multiply
+}
+
+def join(x):
+    if len(x) <= 2:
+        return ' and '.join(x)
+    else:
+        return ', '.join(x[:-1] + ['and ' + x[-1],])
