@@ -35,7 +35,7 @@ def tokenizeDebug(func):
     return nfunc
 
 def evalDebug(func):
-    return func
+#    return func
     def nfunc(self,scope):
         global depth
 
@@ -90,7 +90,6 @@ class Tokenizer(object):
             raise TokenizerException("Ran out of tokens.")
         
         token = self.tokens[self.pos]
-#        print self,"get",token.tval
         self.pos += 1
         return token
 
@@ -98,7 +97,6 @@ class Tokenizer(object):
         if self.pos == 0:
             raise TokenizerException("Tried to return tokens with nothing to return")
         self.pos -= 1
-#        print self,"Unget"
         return self
 
     def pushState(self):
@@ -131,34 +129,28 @@ def nonZero(a):
 
 @breakOnException
 def uneg(a):
-#    print "uneg",a
     return -1*a
 
 @breakOnException
 def power(a, b):
-#    print "pow",a,b
     return a**b
 
 @breakOnException
 def mul(a, b):
-#    print "mul",a,b
     if type(b) is list:
         return map(lambda item:mul(a,item),b)
     return a*b
 
 @breakOnException
 def div(a, b):
-#    print "div",a,b
     return a/b
 
 @breakOnException
 def mod(a, b):
-#    print "mod",a,b
     return a%b
 
 @breakOnException
 def add(a, b):
-#    print "add",a,b
     if type(a) == list and type(b) != list:
         idx = int(b)
         if idx < 0 or idx >= len(a):
@@ -397,8 +389,7 @@ class IfExpression(ExpressionNode):#{{{
         else:
             tokens.unget()
 
-        return self
-        
+        return self        
 
     @evalDebug
     def evaluate(self,scope):
@@ -410,7 +401,9 @@ class IfExpression(ExpressionNode):#{{{
         return 0
 
     def __str__(self):
-        return "if({}) {} else {}".format(self.condition,self.trueCase,self.falseCase)
+        if self.falseCase is not None:
+            return "if({}) {} else {}".format(self.condition, self.trueCase, self.falseCase)
+        return "if({}) {}".format(self.condition, self.trueCase)
 #}}}
 
 #}}}
@@ -802,6 +795,27 @@ scope = {}
 def start():
     global scope
     includeMath(scope)
+    try:
+        for line in file("math_scope"):
+            try:
+                Expression().parse(Tokenizer(line.strip())).evaluate(scope)
+            except:
+                print "Exception interpreting line:"
+                print line
+                import traceback;
+                traceback.print_exc()
+    except:
+        pass
+
+def stop():
+    try:
+        f = file("math_scope", "w")
+        for k, v in scope.items():
+            if type(v) == NativeFunction:
+                continue
+            f.write("{}=({})\n".format(k, clean(v)))
+    except:
+        pass
 
 def clean(val):
     if type(val) == float:
