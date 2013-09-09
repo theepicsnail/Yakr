@@ -17,6 +17,7 @@ def title(who, what, where):
         return
     except Exception as e:
         say(where, "O.o %r" % e.message )
+        return
     if content.find("</title>") == -1:
         return
     title_content = content.split("</title>")[0].split(">")[-1]
