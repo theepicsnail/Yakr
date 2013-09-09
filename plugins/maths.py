@@ -176,7 +176,6 @@ def call(a, b, scope):
 #    print "call",a,b,"Scope:",scope.keys()
     trailer = b.evaluate(scope)
     if trailer is None:
-        print "Error evaluating:",b
         return None
 
     if type(a) in [float, int, complex]:
@@ -195,6 +194,8 @@ def call(a, b, scope):
             argVals = [argVals]
         if len(a.argNames) > len(argVals):
             argVals += [0] * (len(a.argNames)-len(argVals))
+        #print "Calling",a,"with",newScope
+        newScope.update(**a.closure)
         newScope.update(dict(zip(a.argNames,argVals)))
 #        print "Calling with scope:",newScope.keys()
         return a.call(newScope)
@@ -207,7 +208,15 @@ class FunctionAssignmentExpression(ExpressionNode):#{{{
         self.argNames = []
         self.funcBody = None
         self.funcName = None
-        self.constructionScope = {}
+        self.closure = {}
+
+    def duplicate(self):
+        dup = FunctionAssignmentExpression()
+        dup.argNames = self.argNames
+        dup.funcBody = self.funcBody
+        dup.funcName = self.funcName
+        dup.closure = dict(**self.closure)
+        return dup
 
     @tokenizeDebug
     def parse(self, tokens):
@@ -254,20 +263,41 @@ class FunctionAssignmentExpression(ExpressionNode):#{{{
         self.funcBody = CommaExpression().parse(tokens)
         self.funcName = self.funcName.tval
         tokens.discardState()
-        return self
+        return self.duplicate()
 
     @evalDebug
     def evaluate(self,scope):
-        scope[self.funcName] = self
-        self.constructionScope = scope
-        return self
+        if self.funcName in scope and type(scope[self.funcName]) == NativeFunction:
+            raise EvaluatorException("Can not override native function: " + self.funcName)
+        inst = self.duplicate()
+        scope[self.funcName] = inst
+        inst.closure = scope.get("%CLOSURE",{})
+        return inst
 
     @evalDebug
-    def call(self,scope):
-        return self.funcBody.evaluate(dict(self.constructionScope,**scope))
+    def call(self, scope):
+        enclosed_args = self.closure.copy()
+        for arg in self.argNames:
+            enclosed_args[arg] = scope[arg]
+        passed_args = {}
+        passed_args.update(scope)
+        passed_args["%CLOSURE"] = enclosed_args
+        return self.funcBody.evaluate(passed_args)
 
     def __str__(self):
-        return self.funcName+"("+",".join(self.argNames)+")="+str(self.funcBody) #+" {Scope:"+str(self.constructionScope)+"}"
+        func_head = self.funcName+"("+",".join(self.argNames)+")="
+        func_body = str(self.funcBody)
+        keys_to_enclose = set(self.closure.keys()) - set(self.argNames)
+        if keys_to_enclose:
+            keys = list(keys_to_enclose)
+            enclosed_args = ",".join(keys)
+            enclosed_vals = ",".join([str(self.closure[key]) for key in keys])
+
+            func_body = "(_({})=( {} ))({})".format(
+                enclosed_args,
+                func_body,
+                enclosed_vals)
+        return func_head + func_body
 #}}}
 
 class VariableAssignmentExpression(ExpressionNode):#{{{
@@ -295,6 +325,8 @@ class VariableAssignmentExpression(ExpressionNode):#{{{
 
     @evalDebug
     def evaluate(self,scope):
+        if self.varName in scope and type(scope[self.varName]) == NativeFunction:
+            raise EvaluatorException("Can not override native function: " + self.varName)
         scope[self.varName] = self.valExpr.evaluate(scope)
         return scope[self.varName]
 
@@ -703,6 +735,8 @@ class NativeFunction(FunctionAssignmentExpression):
         self.argNames = args
         self.func = func
         self.funcBody = "[Native Function]"
+        self.closure = {}
+
     def call(self,scope):
         return self.func(*map(scope.get,self.argNames))
 
