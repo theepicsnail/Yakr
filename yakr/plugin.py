@@ -57,6 +57,9 @@ class Plugin(object):
         try:
             self.write_pipe.put(line, False)
         except Queue.Full:
+            import traceback
+            print self.name,"is full"
+            traceback.print_exc()
             pass
 
     def get(self):
@@ -143,6 +146,8 @@ def _process_begin(plugin_name, data_in_data_out):
         try:
             plugin_module.handle_line(data)
         except:
+            data_out.put("PRIVMSG #test :{} had an exception while processing".format(plugin_name))
+            data_out.put("PRIVMSG #test :{}".format(data))
             import traceback
             traceback.print_exc()
             
