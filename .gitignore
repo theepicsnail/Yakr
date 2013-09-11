@@ -1,1 +1,11 @@
 *.pyc
+\#*#
+.\#*
+*~
+*.bk
+*.bak
+.dir-locals.el
+RECORD
+log
+*.pkl
+*.db

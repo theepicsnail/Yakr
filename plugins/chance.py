@@ -32,6 +32,9 @@ _MAGIC_8_OUTPUTS = [
 def magic8(who, what, where):
     say(where, random.choice(_MAGIC_8_OUTPUTS))
 
+@command("flip")
+def flip(who, what, where):
+    say(where, who + ": " + random.choice(["heads", "tails"]))
 
 @command("roll")
 def roll(who, what, where):
