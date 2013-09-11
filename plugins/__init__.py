@@ -59,7 +59,9 @@ def join(room):
     _send("JOIN " + room)
 
 def say(to, what):
-    _send(u"PRIVMSG {} :{}".format(to, what))#what.decode('utf-8')))
+    if type(what) == str:
+        what = what.decode("utf-8")
+    _send(u"PRIVMSG {} :{}".format(to, what))
 
 def topic(room, text):
     _send("TOPIC " + room +" :" + text.decode('utf-8'))
