@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from . import *
 import random
 import re
@@ -34,6 +35,20 @@ def magic8(who, what, where):
 
 @command("flip")
 def flip(who, what, where):
+    say(where, '"' + what + '"')
+    if "burger" in what:
+        say(where, who + ": {C4}*sizzle*{} Would you like fries with that?")
+        return
+    elif "table" in what:
+        say(where, who + u": (╯{C4}°{}□{C4}°{}）╯{C10}︵ {C7}┻━┻{C10})")
+        return
+    elif "hair" in what:
+        say(where, who + ": I WHIP MY HAIR BACK AND FORTH")
+        return
+    elif "flop" in what:
+        say(where, who + ": Heads, definitely. Well, tails is nice, too. Yeah, let's go with tails. No, heads. Tails. ...which do you like?")
+        return
+
     say(where, who + ": " + random.choice(["heads", "tails"]))
 
 @command("roll")

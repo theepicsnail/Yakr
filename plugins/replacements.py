@@ -4,7 +4,11 @@ from . import *
 REPLACEMENT_MAP = {
     "<3":u'{C5}♥{}',
     "LOD":u'ಠ_ಠ',
-    "TABLEFLIP":u'(╯°□°）╯︵ ┻━┻)'
+    "TABLEFLIP":u'(╯°□°）╯︵ ┻━┻)',
+    ">:3":"JESUS CHRIST, IT'S A LION! GET IN THE CAR!",
+    "i dunno":u"¯\(°_o)/¯",
+    "I dunno":u"¯\(°_o)/¯",
+    "*shrug*":u"¯\(°_o)/¯",
 }
 
 
