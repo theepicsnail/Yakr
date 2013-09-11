@@ -77,13 +77,33 @@ def remove_stat(who, what, where):
 
     update_topic()
 
+@command("set")
+@restrict_channel
+def set_stat(who, what, where):
+    stat, time = what.split()
+
+    try:
+        days = int(time)
+    except ValueError:
+        say(where, "The syntax for this is $set <timer> <days>.")
+        return
+
+    old = CACHE.get(who, {}).get(stat, None)
+    if old is not None:
+        say(where, get_dt(old))
+
+    d = CACHE.get(who, {})
+    d[stat] = datetime.datetime.now() - datetime.timedelta(days)
+    CACHE[who] = d
+    update_topic()
+
 @command("")
 @restrict_channel
 def emptyCommand(who, what, where):
     #Handle all of the "$foo" for resetting timers
     if " " in what:
         if what == "":
-            say(where, "$<timer> to set a timer, $remove <timer> to remove it")
+            say(where, "$<timer> to start a timer, $set <timer> <days> to set it, $remove <timer> to remove it.")
         return
     what = str(what)
 
