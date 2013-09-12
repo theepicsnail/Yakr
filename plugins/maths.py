@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from . import *
+from yakr.plugin_base import *
 set_command_prefix("%")
 
 import collections

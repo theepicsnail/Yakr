@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 import datetime
 import pickle
 

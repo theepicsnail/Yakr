@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 
 
 colors = ["{C0}", "{C4}", "{C7}", "{C3}", "{C10}", "{C6}"]

@@ -1,5 +1,5 @@
 # pylint: disable=E0102
-from . import *
+from yakr.plugin_base import *
 from threading import Timer
 import pickle
 import datetime

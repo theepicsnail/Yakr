@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 from random import randint
 @command("gayify")
 def gayify(who, what, where):

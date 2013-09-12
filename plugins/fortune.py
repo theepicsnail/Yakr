@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 import subprocess
 import threading
 import random

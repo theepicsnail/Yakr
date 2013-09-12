@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 import urllib2
 import json
 

@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 import re
 
 _SED_COLORS = [4, 7, 3, 10, 6]

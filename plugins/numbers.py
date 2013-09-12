@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 from random import sample, randint
 import re, urllib
 from collections import Counter

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from . import *
+from yakr.plugin_base import *
 
 REPLACEMENT_MAP = {
     "<3":u'{C5}♥{}',

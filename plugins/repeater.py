@@ -1,4 +1,4 @@
-from . import *
+from yakr.plugin_base import *
 
 @command("repeat")
 def repeat(who, what, where):
