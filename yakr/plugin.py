@@ -38,7 +38,7 @@ class Plugin(object):
         TODO: look into scheduling a kill, so that if the process is up after
         x seconds, we forcefully kill it.
         """
-        self.write_pipe.put(None)
+        self.put(None)
         self.write_pipe.close()
         self.proc.join(3)
         self.proc.terminate()
@@ -89,6 +89,7 @@ def _process_begin(plugin_name, data_in_data_out):
     except:
         import traceback
         traceback.print_exc()
+        data_out.put(None)
         return
     #foo.bar.baz we want a handle on 'baz', not 'plugins'
     for sub_module in plugin_name.split("."):
