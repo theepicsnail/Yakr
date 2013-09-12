@@ -26,7 +26,7 @@ def on_line(groups):
 
     line = groups[0]
     _LINES -= 1
-    _DATA += "\n" + line
+    _DATA += line + "\n"
 
     if _LINES == 0:
         url = sprunge(_DATA)
