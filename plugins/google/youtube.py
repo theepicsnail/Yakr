@@ -1,4 +1,4 @@
-from .. import *
+from yakr.plugin_base import *
 import gdata.youtube
 import gdata.youtube.service
 import re

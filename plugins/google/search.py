@@ -1,4 +1,4 @@
-from .. import *
+from yakr.plugin_base import *
 import urllib2
 import json
 _API_URL = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" 

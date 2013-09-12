@@ -1,4 +1,4 @@
-from .. import *
+from yakr.plugin_base import *
 from yakr.util import unescape
 import re
 import urllib2
