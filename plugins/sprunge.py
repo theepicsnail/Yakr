@@ -19,7 +19,6 @@ def record(who, what, where):
 
 @match("(.*)")
 def on_line(groups):
-    print _LINES, _DATA, groups
     global _LINES, _DATA
     if _LINES == 0:
         return

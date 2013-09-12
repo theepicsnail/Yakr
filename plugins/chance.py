@@ -35,7 +35,6 @@ def magic8(who, what, where):
 
 @command("flip")
 def flip(who, what, where):
-    say(where, '"' + what + '"')
     if "burger" in what:
         say(where, who + ": {C4}*sizzle*{} Would you like fries with that?")
         return
