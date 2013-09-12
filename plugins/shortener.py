@@ -3,7 +3,7 @@ import urllib2
 import urllib
 import re
 
-_URL_RE = "(https?[\x20-\x7F]+)"
+_URL_RE = "(https?://[\x20-\x7F]+)"
 #http://v.gd/create.php?format=simple&url=www.example.com
 
 
