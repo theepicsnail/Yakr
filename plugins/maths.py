@@ -35,7 +35,7 @@ def tokenizeDebug(func):
     return nfunc
 
 def evalDebug(func):
-#    return func
+    return func
     def nfunc(self,scope):
         global depth
 
