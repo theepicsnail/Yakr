@@ -2,7 +2,7 @@ from . import *
 import urllib2
 import re
 from yakr.util import unescape
-_URL_RE = "(https?[^\s]*)"
+_URL_RE = "(https?://[\x20-\x7F]+)"
 
 @privmsg
 def title(who, what, where):
