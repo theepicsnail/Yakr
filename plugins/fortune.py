@@ -4,9 +4,10 @@ import threading
 import random
 import re
 
-_ACTIVITY = False
+_ACTIVITY = set()
 _MIN_WAIT = 10 * 60
 _MAX_WAIT = 60 * 60
+
 def get_fortune():
     return re.sub("\s+", " ", 
         subprocess.check_output(["fortune", "-s"]))
@@ -27,14 +28,18 @@ def random_fortune():
     schedule_fortune()
     if not _ACTIVITY:
         return
-    _ACTIVITY = False
+
     fortune = get_fortune()
-    say("#adullam", "<{C2}Random Fortune{}> %s" % fortune)
+
+    for channel in _ACTIVITY:
+        say(channel, "<{C2}Random Fortune{}> %s" % fortune)
+    _ACTIVITY = set()
 
 @privmsg
 def on_activity(who, what, where):
     global _ACTIVITY
-    _ACTIVITY = True
+    if where.startswith("#"):
+        _ACTIVITY.add(where)
 #from Yakr import Bot
 #print Bot
 #Bot.join("#foo")
