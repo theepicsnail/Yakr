@@ -111,6 +111,7 @@ def numbers_main(who, what, where):
             return
         say(where, "Answer: " + solve())
         say(where, "Game over. " + game_state())
+        end_game()
         return
 
     say(where, " ".join([
