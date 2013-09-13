@@ -22,7 +22,7 @@ def pull_changes():
 @match(":{}.*PRIVMSG {} :{} ([^ ]+).*".format(_BOT, _CHANNEL, _REPO))
 def on_privmsg(groups):
     change = groups[0]
-    _UPDATES.add(change)
+    _UPDATED.add(change)
 
 
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
