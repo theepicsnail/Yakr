@@ -1,4 +1,5 @@
 from yakr.plugin_base import *
+from time import sleep
 import subprocess
 
 _BOT = "YakrPush"
@@ -26,6 +27,7 @@ def on_privmsg(groups):
 
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
+    time.sleep(1)
     print "bot left"
     plugins = ""
     non_plugins = ""
