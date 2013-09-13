@@ -33,6 +33,7 @@ colorize
 date
 fortune
 gayify
+github_reloader
 google.define
 google.search
 google.youtube

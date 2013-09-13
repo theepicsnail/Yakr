@@ -12,6 +12,7 @@ def start():
         _ALIASES = pickle.load(file(ALIAS_STORE))
     except:
         _ALIASES = {}
+
 def stop():
     pickle.dump(_ALIASES, file(ALIAS_STORE,"w"))
 

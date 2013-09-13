@@ -1,4 +1,3 @@
-# pylint: disable=E0102
 from yakr.plugin_base import *
 from threading import Timer
 import pickle
@@ -13,29 +12,25 @@ _NEXT_ALARM = None
 
 
 def load_alarms():
-    global _ALARM_CACHE, ALARM_STORE
+    global _ALARM_CACHE
     try:
         _ALARM_CACHE = pickle.load(file(ALARM_STORE))
     except:
         _ALARM_CACHE = []
 
 def save_alarms():
-    global _ALARM_CACHE, ALARM_STORE
     pickle.dump(_ALARM_CACHE, file(ALARM_STORE, "w"))
 
 def parse_time(time_string):
     return datetime.datetime(*_DT_PARSER.parse(time_string)[0][:6])
 
 def add_alarm(what, where, when):
-    global _ALARM_CACHE, _NEXT_ALARM
     _ALARM_CACHE.append((when, where, what))
     _ALARM_CACHE.sort()
     schedule_alarm()
     save_alarms()
-    pass 
 
 def start():
-    global _NEXT_ALARM, _ALARM_CACHE
     load_alarms()
     schedule_alarm()
 
@@ -44,7 +39,7 @@ def stop():
         _NEXT_ALARM.cancel()
 
 def schedule_alarm():
-    global _NEXT_ALARM, _ALARM_CACHE
+    global _NEXT_ALARM
     if not _ALARM_CACHE:
         return
 
@@ -60,7 +55,6 @@ def schedule_alarm():
     _NEXT_ALARM.start()
 
 def check_alarm():
-    global _ALARM_CACHE
     if not _ALARM_CACHE:
         return #No alarms, exit.
 
@@ -81,5 +75,10 @@ def alarm(who, what, where):
     if not alarm_time:
         say(where, "I couldn't figure out how to parse '%s'" % time_string)
         return
+
     say(where, "Scheduled for: %s" % alarm_time)
+    msg = "({}) {}: {}".format(
+        datetime.datetime.now().strftime("%x %X"),
+        who,
+        msg)
     add_alarm(msg, where, alarm_time)

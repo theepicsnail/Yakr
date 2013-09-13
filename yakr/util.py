@@ -94,7 +94,7 @@ _COLOR_MAP[""] = chr(15)   #{} = reset colors
 _COLOR_MAP["B"] = chr(0x02)#{B} bold
 _COLOR_MAP["U"] = chr(0x1F)#{U} underline
 _COLOR_MAP["R"] = chr(0x12)#{R} reverse
-_COLOR_MAP["LINK"] = "\x1F\x032\02\02"
+_COLOR_MAP["LINK"] = "\x1F\x0310\02\02"
 def parse_colors(line):
     for code, replacement in _COLOR_MAP.items():
         line = line.replace("{{{}}}".format(code), replacement)
