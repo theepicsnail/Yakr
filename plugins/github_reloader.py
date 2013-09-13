@@ -5,60 +5,44 @@ import subprocess
 _BOT = "YakrPush"
 _CHANNEL = "#test"
 _REPO = "Yakr/master"
-
-_UPDATED = set()
-
-def get_changed(change):
-    args = ["git", "diff", str(change), "--name-only"]
-    std_out = ""
-    while not std_out:
-        print "get_changed",change
-        print args
-        sleep(1)
-        std_out,std_err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    print "returned",std_out
-    print "stderr",std_err
-    return std_out.strip().split("\n")
-
+_UPDATED = 0
 def pull_changes():
     print "pulling changes"
     subprocess.call(["git", "pull"])
 
+#Count the number of commits made
 @match(":{}.*PRIVMSG {} :{} ([^ ]+).*".format(_BOT, _CHANNEL, _REPO))
 def on_privmsg(groups):
+    global _UPDATED
     change = groups[0]
-    _UPDATED.add(change)
-
+    _UPDATED += 1
 
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
+    global _UPDATED
+    #Get the changes
     pull_changes()
-    names = subprocess.Popen(["git", "diff", "--name-only", "HEAD", "HEAD~%s" % len(_UPDATED)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].strip().split("\n")
-    print "Diff between HEAD and HEAD%s" % len(_UPDATED) 
-    print "bot left"
+
+    #See which files changed in the last N commits
+    std_out = subprocess.Popen(
+        ["git", "diff", "--name-only", "HEAD", "HEAD~%s" % _UPDATED], 
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+    names = std_out.strip().split("\n")
+
+    _UPDATED = 0
+
+    #Figure out which plugins we need to reload
     plugins = ""
     non_plugins = ""
-    #for update_hash in _UPDATED:
-    for name in names:#get_changed(update_hash):
-            print "updated:", name
-            if name.startswith("plugins"):
-                plugins += " " + ".".join(name[:-3].split("/")[1:])
-            else:
-                non_plugins += " " + name
-    #_UPDATED.clear()
-    print "plugins:"
-    print plugins
-    print "non_plugins"
-    print non_plugins
-    
+    for name in names:
+        if name.startswith("plugins"):
+            plugins += " " + ".".join(name[:-3].split("/")[1:])
+        else:
+            non_plugins += " " + name
 
-    print "outputting:"
     if non_plugins:
         say(_CHANNEL, "Files not cycled:" + non_plugins)
 
     if plugins:
         say(_CHANNEL, "Cycling"+plugins)
-        print "thinking:"
-        print ":GitHub_Reloader!a@b.c NOTICE dit :cycle" + plugins
         think(":GitHub_Reloader!a@b.c NOTICE dit :cycle" + plugins)
-
