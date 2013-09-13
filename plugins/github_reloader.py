@@ -32,8 +32,8 @@ def on_privmsg(groups):
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
     pull_changes()
-    names = subprocess.Popen(["git", "diff", "--name-only", "HEAD", "HEAD~1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].strip().split("\n")
-    
+    names = subprocess.Popen(["git", "diff", "--name-only", "HEAD", "HEAD~%s" % len(_UPDATED)], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].strip().split("\n")
+    print "Diff between HEAD and HEAD%s" % len(_UPDATED) 
     print "bot left"
     plugins = ""
     non_plugins = ""
