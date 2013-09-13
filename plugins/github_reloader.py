@@ -31,23 +31,25 @@ def on_privmsg(groups):
 
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
+    pull_changes()
+    names = subprocess.Popen(["git", "diff", "--name-only", "HEAD", "HEAD~1"]).communicate()[0].strip().split("\n")
+
     print "bot left"
     plugins = ""
     non_plugins = ""
-    for update_hash in _UPDATED:
-        for name in get_changed(update_hash):
+    #for update_hash in _UPDATED:
+    for name in names:#get_changed(update_hash):
             print "updated:", name
             if name.startswith("plugins"):
                 plugins += " " + ".".join(name[:-3].split("/")[1:])
             else:
                 non_plugins += " " + name
-    _UPDATED.clear()
+    #_UPDATED.clear()
     print "plugins:"
     print plugins
     print "non_plugins"
     print non_plugins
     
-    pull_changes()
 
     print "outputting:"
     if non_plugins:
