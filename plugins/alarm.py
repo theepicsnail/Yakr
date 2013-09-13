@@ -75,6 +75,7 @@ def alarm(who, what, where):
     if not alarm_time:
         say(where, "I couldn't figure out how to parse '%s'" % time_string)
         return
+
     say(where, "Scheduled for: %s" % alarm_time)
     msg = "({}) {}: {}".format(
         datetime.datetime.now().strftime("%x %X"),
