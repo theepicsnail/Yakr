@@ -38,7 +38,7 @@ def on_part(groups):
                 plugins += " " + ".".join(name[:-3].split("/")[1:])
             else:
                 non_plugins += " " + name
-
+    _UPDATED.clear()
     print "plugins:"
     print plugins
     print "non_plugins"
