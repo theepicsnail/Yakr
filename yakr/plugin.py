@@ -83,6 +83,7 @@ def _process_begin(plugin_name, data_in_data_out):
     data_in -  get() only queue of irc lines (\r\n stripped)
     data_out - put(...) only queue of irc lines (no \r\n needed)
     """
+    data_in, data_out = data_in_data_out
     print("starting {}".format(plugin_name))
     try:
         plugin_module = __import__("plugins." + plugin_name)
@@ -127,7 +128,6 @@ def _process_begin(plugin_name, data_in_data_out):
     # out_queue is None here, to prevent any bot actions during start
     plugin_module.start()
 
-    data_in, data_out = data_in_data_out
     #Read data from the main process, handling state change and sental values 
     while True:
         data = data_in.get()
