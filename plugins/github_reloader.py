@@ -26,7 +26,6 @@ def on_privmsg(groups):
     change = groups[0]
     _UPDATED.add(change)
 
-
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
     sleep(30)
