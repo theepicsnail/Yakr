@@ -104,7 +104,6 @@ class Bot(object):
         self.process_net_data(data)
 
     def process_net_data(self, data):
-        print "process:", data
         if data.startswith("PING"):
             self.net_write.put("PONG" + data[4:])
         if ("001 %s :" % self.nick) in data:
