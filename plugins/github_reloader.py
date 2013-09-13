@@ -12,8 +12,9 @@ def get_changed(change):
     args = ["git", "diff", str(change), "--name-only"]
     print "get_changed",change
     print args 
-    std_out = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()[0]
+    std_out,std_err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     print "returned",std_out
+    print "stderr",std_err
     return std_out.strip().split("\n")
 
 def pull_changes():
