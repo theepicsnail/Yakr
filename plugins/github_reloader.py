@@ -8,7 +8,7 @@ _REPO = "Yakr/master"
 _UPDATED = set()
 
 def get_changed(change):
-    args = ["git", "diff", change, "--name-only"]
+    args = ["git", "diff", str(change), "--name-only"]
     print "get_changed",change
     print args 
     std_out = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()[0]
@@ -22,27 +22,28 @@ def pull_changes():
 @match(":{}.*PRIVMSG {} :{} ([^ ]+).*".format(_BOT, _CHANNEL, _REPO))
 def on_privmsg(groups):
     change = groups[0]
-    for name in get_changed(change):
-        _UPDATED.add(name)
+    _UPDATES.add(change)
+
 
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
     print "bot left"
+    pull_changes()
     plugins = ""
     non_plugins = ""
-    for name in _UPDATED:
-        print "updated:", name
-        if name.startswith("plugins"):
-            plugins += " " + ".".join(name[:-3].split("/")[1:])
-        else:
-            non_plugins += " " + name
+    for update_hash in _UPDATED:
+        for name in get_changed(update_hash):
+            print "updated:", name
+            if name.startswith("plugins"):
+                plugins += " " + ".".join(name[:-3].split("/")[1:])
+            else:
+                non_plugins += " " + name
 
     print "plugins:"
     print plugins
     print "non_plugins"
     print non_plugins
     
-    pull_changes()
 
     print "outputting:"
     if non_plugins:
