@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from yakr.plugin_base import *
+import math
 import random
 import re
 
@@ -54,52 +55,86 @@ def flip(who, what, where):
 def roll(who, what, where):
 
     if not what:
-        say(where, who +": "+ str(random.randint(1,6)))
+        return roll_1d6()
 
     else:
         try:
             roll_dict = re.match("(?P<dice>\d*)[dD](?P<sides>\d+)((?P<operator>[-+*/x])(?P<modifier>\d+))?", what).groupdict()
+            roll_dict["sides"] = int(roll_dict["sides"])
         except AttributeError:
             try:
                 roll_dict = re.match("(?P<dice>\d*)", what).groupdict()
-                roll_dict["sides"] = "6"
+                roll_dict["sides"] = 6
             except AttributeError:
                 say(where, who + ": The syntax is [number of dice]d[number of sides per dice][modifier (-1, +2, *3, /4)]")
             return
         rollsults = []
 
-        if int(roll_dict["sides"]) > 1000000000:
+        if roll_dict["sides"] > 1000000000:
             say(where, who + ": I, uh...couldn't lift the die. O.o")
             return
 
-        elif int(roll_dict["sides"]) < 2:
+        elif roll_dict["sides"] < 2:
             say(where, who + ": *tch* Come on, son!")
             return
 
-        if roll_dict["dice"]:
-            if int(roll_dict["dice"]) < 1:
+        if roll_dict["dice"] and int(roll_dict["dice"]) > 1:
+            roll_dict["dice"] = int(roll_dict["dice"])
+            if roll_dict["dice"] < 1:
                 say(where, who + ": http://i.imgur.com/ckYyr4h.jpg")
                 return
-            if int(roll_dict["dice"]) > 30:
+            if roll_dict["dice"] > 30:
                 say(where, who + ": AIN'T NOBODY GOT TIME FOR THAT! Keep it under 30 dice. ;)")
                 return
-            for _ in xrange(int(roll_dict["dice"])):
-                rollsults.append(random.randint(1, int(roll_dict["sides"])))
+            for _ in xrange(roll_dict["dice"]):
+                rollsults.append(random.randint(1, roll_dict["sides"]))
 
             rollsults.sort()
             roll_total = sum(rollsults)
 
         else:
-            rollsults.append(random.randint(1, int(roll_dict["sides"])))
+            rollsults.append(random.randint(1, roll_dict["sides"]))
             roll_total = rollsults[0]
-            say(where, who + ": " + str(roll_total))
+            say(where, who + ": " + colorizer(roll_total))
             return
 
-        if roll_dict["operator"]:
-            roll_total = operators[roll_dict["operator"]](roll_total, int(roll_dict["modifier"]))
+        colorizer = get_colorizer(roll_dict["sides"], 1)
 
-        say(where, who + ": {} for a total of {}.".format(join(map(str, rollsults)), roll_total))
+        if roll_dict["operator"]:
+            roll_dict["modifier"] = int(roll_dict["modifier"])
+            roll_total = operators[roll_dict["operator"]](roll_total, roll_dict["modifier"])
+            total_colorizer = get_colorizer(
+                roll_dict["sides"],
+                roll_dict["dice"],
+                lambda x: operators[roll_dict["inverse_operator"]](x, roll_dict["modifier"]))
+        else:
+            total_colorizer = get_colorizer(roll_dict["sides"], roll_dict["dice"])
+            
+
+        say(where, who + ": {} for a total of {}.".format(join(map(colorizer, rollsults)), total_colorizer(roll_total)))
         return
+
+def averages(sides, dice):
+    # The formula is a combination of the mean roll (number of dice times (number of sides + 1) / 2) and
+    # the stddev, using this variance function: https://en.wikipedia.org/wiki/Variance#Fair_die
+    low = dice*((sides+1)/2)-math.sqrt(dice*((sides**2-1)/12))
+    high = dice*((sides+1)/2)+math.sqrt(dice*((sides**2-1)/12))
+    return low, high
+
+def get_colorizer(sides, dice, modifier=lambda x: x):
+    avgs = map(modifier, averages(sides, dice))
+    def colorizer(roll):
+        if roll <= avgs[0]:
+            return "{{C4}}{}{{}}".format(roll)
+        elif roll <= avgs[1]:
+            return "{{C8}}{}{{}}".format(roll)
+        else:
+            return "{{C9}}{}{{}}".format(roll)
+
+    return colorizer
+            
+def roll_1d6():
+        say(where, who +": "+ str(random.randint(1,6)))
 
 def subtract(x, y):
     return x - y
@@ -119,6 +154,14 @@ operators = {
     "/": divide,
     "*": multiply,
     "x": multiply
+}
+
+inverse_operators = {
+    "+": operators["-"],
+    "-": operators["+"],
+    "/": operators["*"],
+    "*": operators["/"],
+    "x": operators["/"],
 }
 
 def join(x):
