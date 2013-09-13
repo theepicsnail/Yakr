@@ -24,7 +24,6 @@ def on_privmsg(groups):
     change = groups[0]
     _UPDATED.add(change)
 
-
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
     print "bot left"
@@ -44,7 +43,6 @@ def on_part(groups):
     print "non_plugins"
     print non_plugins
     
-
     print "outputting:"
     if non_plugins:
         say(_CHANNEL, "Files not cycled:" + non_plugins)
@@ -54,3 +52,4 @@ def on_part(groups):
         print "thinking:"
         print ":GitHub_Reloader!a@b.c NOTICE dit :cycle" + plugins
         think(":GitHub_Reloader!a@b.c NOTICE dit :cycle" + plugins)
+
