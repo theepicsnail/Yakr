@@ -82,8 +82,7 @@ class Bot(object):
                     self.output_listeners.remove(plugin)
             elif data.startswith("REPROCESS:"):
                 data = data[10:]
-                for queue in self.plugin_map.values():
-                    queue.put(data)
+                self.process_net_data(data)
             return
 
         self.broadcast(data)
@@ -102,6 +101,10 @@ class Bot(object):
         if data is None:
             self._stop()
             return
+        self.process_net_data(data)
+
+    def process_net_data(self, data):
+        print "process:", data
         if data.startswith("PING"):
             self.net_write.put("PONG" + data[4:])
         if ("001 %s :" % self.nick) in data:
