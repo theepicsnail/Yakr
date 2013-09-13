@@ -27,7 +27,6 @@ def on_privmsg(groups):
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
     print "bot left"
-    pull_changes()
     plugins = ""
     non_plugins = ""
     for update_hash in _UPDATED:
@@ -43,6 +42,8 @@ def on_part(groups):
     print "non_plugins"
     print non_plugins
     
+    pull_changes()
+
     print "outputting:"
     if non_plugins:
         say(_CHANNEL, "Files not cycled:" + non_plugins)
