@@ -28,7 +28,7 @@ def on_privmsg(groups):
 
 @match(":{}.*PART {}".format(_BOT, _CHANNEL))
 def on_part(groups):
-    time.sleep(1)
+    time.sleep(30)
     print "bot left"
     plugins = ""
     non_plugins = ""
