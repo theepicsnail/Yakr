@@ -828,7 +828,6 @@ def clean(val):
 @command("")
 def do_math(who, what, where):
     response = ""
-    print "Math:", what
     try:
         resp = Expression().parse(Tokenizer(what)).evaluate(scope)
         scope['_'] = resp
