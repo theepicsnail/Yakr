@@ -1,10 +1,97 @@
 Yakr is yet another IRC bot. This one is designed to be very thin, with the same plugability of Superbot and Superbot2.
 
-This requires the gevent package to be installed. (http://www.gevent.org/)
+### Starting
 
-End goals
-To start the bot:
-python Main.py
+To **start** the bot:
+(Be sure to configure the bot first!)
+
+    python Main.py
+
+To **configure** the bot:
+Edit yakr.cfg
+To change the plugins that are loaded, you need to edit Main.py (Issue: #2 )
+
+
+### Managing Yakr
+
+Commands are sent to yakr through notices.
+
+/notice <bot> <command> <space separated arg list>
+where <bot> is your bots name
+valid commands:
+
+    load - load each plugin (skipping if loaded already)
+    unload - unload each plugin
+    cycle - load each plugin (unloading first if necessary)
+    quote - have yakr send the argument unaltered to the network
+    part - have yakr leave channels
+
+
+### Writing plugins
+
+Create your plugin under the **plugins** directory.
+The name of your plugin will be the module name for your file (wihout 'plugins.')
+
+    plugins/foo.py -> "foo"
+    plugins/my_plugins/bar.py -> "my_plugins.bar"
+
+Start your python file off with 
+
+    from yakr.plugin_base import *
+    
+You're now ready to add your plugin functionality. See **Plugin Life** and **Plugin Base** for more information.
+
+### Debugging plugins
+
+Yakr comes with 2 modes that help make debugging a plugin easier/quicker.
+
+    python main.py record
+    
+Will record all (Issue: #3 ) network traffic to/from the bot into a RECORD file. 
+Reproduce your plugin failing in record mode to capture it. Once captured you can:
+
+    python main.py replay
+
+Which will play back the recorded data, allowing you to test your plugin against the example over and over. 
+This prevents you from needing to connect the bot to the irc server each test. 
+Editing the RECORD file lets you change your test example without needing to connect to the irc server too.
+
+Exceptions are logged to **#test**, and the stack traces are shown in stdout, which may help you debug your issues.
+
+There are a couple plugins that may prove useful too.
+
+    stdout - print network data to stdout
+    sprunge - record a number of lines, and then upload them to sprunge
+
+
+### Plugin Life
+
+This section explains the stages a plugin can go through and what's available at each stage.
+Within a plugin, there is only one thread (unless you create some for yourself)
+
+* Your process is started (by yakr)
+* Your plugin is loaded 
+    * If loading fails, skip to stop()
+* start() is called
+    * At this point most plugin features will not work
+    * This space is where heavy initial code should go
+* The plugin enters its main loop now
+* Each line is processed (more about this step below)
+* Eventually ready() gets called
+    * At this point, all plugin features are now good to go
+* The main loop exits (the bot has shut down this plugin)
+* stop() is called
+* Your process is stopped (possibly by force)
+ 
+
+
+### Plugin Base
+
+yakr.plugin_base provides a framework for plugins to use to interact with yakr. 
+While not strictly necessary, it does help make plugin development less repetitive.
+
+
+
 
 To start a new plugin:
 python Main.py makePlugin <pluginName>
@@ -176,11 +263,11 @@ Methods like
 
 
 Stuff available to plugins
-  Shelve
+  [ ] Shelve
     string->object persistant storage
-  Log file
+  [ ] Log file
     Logging object for your plugin 
-  Config file
+  [ ] Config file
     Basic config file parser (ConfigParser)
   Bot (Yakr!)
     Message building
