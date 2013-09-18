@@ -35,9 +35,6 @@ def parse_roll(rollstring):
     """Takes a string.
     If it finds valid dice notation or an empty string, it returns a
     dict describing the rolls to make. Otherwise, it complains and exits"""
-    if not rollstring:
-        return {"dice": 1, "sides": 6, "operator": None, "modifier": None}
-
     try:
         rolldict = re.match("(?P<dice>\d*)([dD](?P<sides>\d+)((?P<operator>[-+*/x])(?P<modifier>\d+))?)?", rollstring).groupdict()
         if not rolldict["sides"]:  #We default to a d6 when people !roll 4
