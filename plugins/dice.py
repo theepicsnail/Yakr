@@ -6,86 +6,92 @@ import random
 import re
 
 @command("roll")
-def roll(who, what, where):
+def roll_command(who, what, where):
+    rolldict = parse_roll(what)
 
-    if not what:
-        return say(where, who +": "+ get_colorizer(1,6)(random.randint(1,6)))
+    if type(rolldict) == str:  # We've had a parsing error
+        say(where, who + ": " + rolldict)
+        return False
 
-    try:
-        roll_dict = re.match("(?P<dice>\d*)([dD](?P<sides>\d+)((?P<operator>[-+*/x])(?P<modifier>\d+))?)?", what).groupdict()
-        if not roll_dict["sides"]:
-            roll_dict["sides"] = 6
-        else:
-            roll_dict["sides"] = int(roll_dict["sides"])
-        if not roll_dict["dice"]:
-            roll_dict["dice"] = 1
-        else:
-            roll_dict["dice"] = int(roll_dict["dice"])
-    except:
-        say(where, who + ": Either use no argument, tell me the number of 6-sided dice to roll, or [number of dice]d[number of sides per dice][modifier (-1, +2, *3, /4)]:")
-        return
+    if sanity_errors(rolldict):  # Check for stupid rolls (100 dice, etc)
+        say(where, who + ": " + sanity_errors(rolldict))
+        return False
 
-    rollsults = []
+    rollsults, roll_total = get_rolls(rolldict)
 
-    if roll_dict["dice"] > 1:
-        roll_dict["dice"] = int(roll_dict["dice"])
+    colorizer, total_colorizer = get_colorizers(rolldict)
 
-    if sanity_errors(roll_dict):
-        say(where, who + sanity_errors(roll_dict))
-
-    for _ in xrange(roll_dict["dice"]):
-        rollsults.append(random.randint(1, roll_dict["sides"]))
-
-        rollsults.sort()
-        roll_total = sum(rollsults)
-
-    if roll_dict["dice"] == 1:
-        rollsults.append(random.randint(1, roll_dict["sides"]))
-        roll_total = rollsults[0]
-        colorizer = get_colorizer(1, roll_dict["sides"])
-        return say(where, who + ": " + colorizer(roll_total))
-
-    colorizer = get_colorizer(1, roll_dict["sides"])
-
-    if roll_dict["operator"]:
-        roll_dict["modifier"] = int(roll_dict["modifier"])
-        roll_total = operators[roll_dict["operator"]](roll_total, roll_dict["modifier"])
-        total_colorizer = get_colorizer(
-            roll_dict["dice"],
-            roll_dict["sides"],
-            lambda x: operators[roll_dict["inverse_operator"]](x, roll_dict["modifier"]))
+    if len(rollsults) < 2:
+        say(where, who + ": {}".format(colorizer(roll_total)))
     else:
-        total_colorizer = get_colorizer(roll_dict["dice"], roll_dict["sides"])
+        say(where,
+            who + ": {} for a total of {}.".format(
+                join(map(colorizer, rollsults)),
+                total_colorizer(roll_total)))
 
-
-    say(where, who + ": {} for a total of {}.".format(join(map(colorizer, rollsults)), total_colorizer(roll_total)))
     return
 
+def parse_roll(rollstring):
+    """Takes a string.
+    If it finds valid dice notation or an empty string, it returns a
+    dict describing the rolls to make. Otherwise, it complains and exits"""
+    try:
+        rolldict = re.match("(?P<dice>\d*)([dD](?P<sides>\d+)((?P<operator>[-+*/x])(?P<modifier>\d+))?)?", rollstring).groupdict()
+        if not rolldict["sides"]:  #We default to a d6 when people !roll 4
+            rolldict["sides"] = 6
+        else:
+            rolldict["sides"] = int(rolldict["sides"])  # We're going to want to use these as ints
+        if not rolldict["dice"]:
+            rolldict["dice"] = 1
+        else:
+            rolldict["dice"] = int(rolldict["dice"])
+        if rolldict["operator"]:
+            rolldict["modifier"] = int(rolldict["modifier"])
+    except:
+        return "Either use no argument, tell me the number of 6-sided dice to roll, or [number of dice]d[number of sides per dice][modifier (-1, +2, *3, /4)]:"
+    else:
+        return rolldict
 
-def sanity_errors(roll_dict):
+
+def sanity_errors(rolldict):
     # Check the arguments for sanity
-    if roll_dict["sides"] > 1000000000:  # Silly huge dice
-        return ": I, uh...couldn't lift the die. O.o"
+    if rolldict["sides"] > 1000000000:  # Silly huge dice
+        return "I, uh...couldn't lift the die. O.o"
 
-    elif roll_dict["sides"] < 2:  # no point in rolling a d1
-        return ": *tch* Come on, son!"
+    elif rolldict["sides"] < 2:  # no point in rolling a d1
+        return "*tch* Come on, son!"
 
-    if roll_dict["dice"] < 1:
-        return ": http://i.imgur.com/ckYyr4h.jpg"
+    if rolldict["dice"] < 1:
+        return "http://i.imgur.com/ckYyr4h.jpg"
 
-    if roll_dict["dice"] > 30:
-        return ": AIN'T NOBODY GOT TIME FOR THAT! Keep it under 30 dice. ;)"
+    if rolldict["dice"] > 30:
+        return "AIN'T NOBODY GOT TIME FOR THAT! Keep it under 30 dice. ;)"
 
     return
+
+def get_rolls(rolldict):
+    """Just sticks all the rolls into an array. Returns that and the sum."""
+
+    rollsults = []  # To store the roll results
+
+    for _ in xrange(rolldict["dice"]):
+        rollsults.append(random.randint(1, rolldict["sides"]))
+        #rollsults.sort()
+
+    return rollsults, sum(rollsults)
 
 def averages(dice, sides):
-    # The formula is a combination of the mean roll (number of dice times (number of sides + 1) / 2) and
-    # the stddev, using this variance function: https://en.wikipedia.org/wiki/Variance#Fair_die
-    low = dice*((sides+1)/2)-math.sqrt(dice*((sides**2-1)/12))
-    high = dice*((sides+1)/2)+math.sqrt(dice*((sides**2-1)/12))
+    """ The formula is a combination of the mean roll
+        (number of dice times (number of sides + 1) / 2)
+    and the stddev, using this variance function:
+        https://en.wikipedia.org/wiki/Variance?oldid=572981218#Fair_die"""
+    low = dice*((sides+1)/2)-math.sqrt(dice*((sides**2-1)/12))/2
+    high = dice*((sides+1)/2)+math.sqrt(dice*((sides**2-1)/12))/2
     return low, high
 
 def get_colorizer(sides, dice, modifier=lambda x: x):
+    """Given a number of sides per die, the number of dice, and an optional
+    modifier, returns a function for coloring based on how "good" the roll was."""
     avgs = map(modifier, averages(sides, dice))
     def colorizer(roll):
         if roll <= avgs[0]:
@@ -96,7 +102,40 @@ def get_colorizer(sides, dice, modifier=lambda x: x):
             return "{{C9}}{}{{}}".format(roll)
 
     return colorizer
-            
+
+def get_colorizers(rolldict):
+    """This returns 2 functions, one for coloring the individual die rolls,
+    one for coloring the total. You can't easily derive how good the total
+    is based on how good the individual rolls are, due to the bell curve
+    tightening as you increase the number of dice.
+
+    Also, this is probably as good a place as any to describe wtf's going on
+    with this operators[]() business. So, a common feature in gaming dice rolls
+    is the modifier. 1d4+1. operators is a dict that maps the string "+" with
+    a function that can be used to do that function. I can't use the infix
+    functions directly, so this is what I'm stuck with.
+
+    inverse_operators[] should be self-explanatory.
+    "-" -> add(), "*" -> divide(), etc.
+
+    The reason I need them is because they alter the total, which means they
+    need to be taken into account for the colorization."""
+    d = rolldict["dice"]
+    s = rolldict["sides"]
+
+    colorizer = get_colorizer(1, s)
+
+    if rolldict["operator"]:
+        op = rolldict["operator"]
+        mod = rolldict["modifier"]
+        roll_total = operators[op](roll_total, mod)
+        total_colorizer = get_colorizer(d, s,
+            lambda x: inverse_operators[op](x, mod))
+    else:
+        total_colorizer = get_colorizer(d, s)
+
+    return colorizer, total_colorizer
+
 operators = {
     "+": operator.add,
     "-": operator.sub,
