@@ -22,15 +22,19 @@ def define(who, what, where):
         #The variable 'num' is from 0 to N-1
         return
     
-
     url = _API_URL + urllib2.quote(term)
     reply = urllib2.urlopen(url).read()
+    results = []
     try:
         null = None
         db = eval(reply[24:])
+        results = db[0]["webDefinitions"][0]["entries"]
     except:
         pass
-    results = db[0]["webDefinitions"][0]["entries"]
+    if len(results) == 0:
+        say(where, "I have no idea what you're talking about '%s' pfft." % term)
+        return
+
     if num >= len(results):
         say(where, "Only %s results." % len(results))
         return
