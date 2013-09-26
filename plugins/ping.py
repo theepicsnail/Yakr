@@ -30,7 +30,7 @@ def pinger(host, chan):
         ip = addr_info[0][-1][0]
         say(chan, "resolved to {}". format(ip))
 
-        out = subprocess.check_output(["ping", "-c", "5", host])
+        out = subprocess.check_output(["ping6", "-c", "5", host])
         lines = out.split("\n")[1:6]
         if not lines[0]:
             say(chan, "Host didn't reply :(")
