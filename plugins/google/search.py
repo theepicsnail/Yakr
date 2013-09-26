@@ -9,6 +9,10 @@ def search(who, what, where):
     reply_json = urllib2.urlopen(_API_URL + urllib2.quote(what)).read()
     response = json.loads(reply_json)
     data = response['responseData']
+    if "results" not in data or len(data['results']) == 0:
+        say(where, "No results :(")
+        return
+
     result = data['results'][0]
     reply = "<{C3}Google Search{}: {B}%s{} | {LINK}%s{} >" % (
             result['titleNoFormatting'], 
