@@ -19,7 +19,6 @@ def start():
 
 @command("t")
 def manual_tweet(who, what, where):
-    print who, what, where
     try:
         if _API.update_status(what):
             say(where, "Update {C9}posted")

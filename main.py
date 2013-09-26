@@ -49,6 +49,7 @@ sed
 shortener
 tell
 titles
+twitter
 weather""".split("\n")
 map(b.load, plugins)
 b.run()

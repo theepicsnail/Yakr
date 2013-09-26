@@ -16,7 +16,6 @@ def shorten(who, what, where):
     url = res.group(0)
     if len(url) <= 18:
         return
-    print "Shortening " + url
     try:
         content = urllib2.urlopen("http://is.gd/create.php?format=simple&url={}"
             .format(urllib.quote(url))).read()
