@@ -148,7 +148,7 @@ def _process_begin(plugin_name, data_in_data_out):
             plugin_module.handle_line(data)
         except:
             data_out.put("PRIVMSG #test :{} had an exception while processing".format(plugin_name))
-            data_out.put("PRIVMSG #test :{}".format(data))
+            data_out.put(u"PRIVMSG #test :{}".format(data))
             import traceback
             traceback.print_exc()
             
