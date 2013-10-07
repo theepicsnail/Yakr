@@ -3,7 +3,7 @@ import urllib2
 import urllib
 import re
 
-_URL_RE = "(https?://[\x21-\x7F]+)"
+_URL_RE = "(https?://[][A-Za-z0-9\-._~:/?#@!$&'()*+,;=]+)"
 #http://v.gd/create.php?format=simple&url=www.example.com
 
 
