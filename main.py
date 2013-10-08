@@ -31,6 +31,7 @@ alarm
 chance
 colorize
 date
+factor
 fortune
 gayify
 github_reloader
