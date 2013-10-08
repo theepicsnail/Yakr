@@ -25,7 +25,7 @@ def set_tell(who, what, where):
 
     nick, msg = what.split(" ", 1)    
     msg_list = TELL_CACHE.get(nick.lower(), [])
-    msg_list.append("<{}> {}: {}".format(now().strftime("%x %X"), who, msg))
+    msg_list.append(u"<{}> {}: {}".format(now().strftime("%x %X"), who, msg))
     TELL_CACHE[nick.lower()] = msg_list
 
 @privmsg
