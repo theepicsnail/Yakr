@@ -75,8 +75,11 @@ def think(irc_line):
 #command functions
 _command_prefix = "!"
 _commands = {}
-def command(trigger):
-    trigger = "^" + _command_prefix + trigger + "( ?.*|)$"
+def command(trigger, requireSpace = True):
+    trigger = "^" + _command_prefix + trigger
+    if requireSpace :
+        trigger += " "
+    trigger += "(.*)$"
     assert not _commands.has_key(trigger), "Multiple definitions of trigger:" + trigger
     def decorator(func):
         _commands[trigger] = func

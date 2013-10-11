@@ -41,7 +41,7 @@ def apply_re(search_re, replacement, flags, line, color_id):
 
     return search_re.sub(replacement, line, count)
 
-@command("s(.*)")
+@command("s", False)#No space after the command "!s_" is enough to trigger this
 def sed(who, what, where):
     extra = what
     working_line = None
