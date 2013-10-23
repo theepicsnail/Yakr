@@ -825,7 +825,7 @@ def clean(val):
     return str(val)
 
 
-@command("")
+@command("", False)
 def do_math(who, what, where):
     response = ""
     try:
