@@ -35,7 +35,7 @@ _ALIAS_RE = re.compile(
     "(.*?)"         #overflow, only invalid lines put data here
     "$")            #END
 
-@command("")
+@command("", False)
 def fire_alias(who, what, where):
     #possible 'what's
     #foo
