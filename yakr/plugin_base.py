@@ -3,6 +3,15 @@ this provides all the functionality needed for a general plugin.
 """
 import re
 
+_out_queue = None
+_command_prefix = None
+_commands = {}
+_matches = {}
+def reset_state():
+    global _out_queue, _command_prefix, _commands, _matches
+    _command_prefix = "!"
+reset_state()
+
 #Override these functions in your plugin, or dont.
 def start():
     pass
@@ -20,6 +29,11 @@ def handle_line(line):
 
     :snail!snail@airc-BD88CA3C PRIVMSG #test :asdf
     """
+
+    #print "--handle line--"
+    #print "line:", line
+    #print "Commands:", _commands
+
     process_commands(line)
     process_matches(line)
 
@@ -40,7 +54,6 @@ def process_matches(line):
         if results:
             func(results.groups())
 #queue stuff
-_out_queue = None
 def set_out_queue(queue):
     global _out_queue
     _out_queue = queue
@@ -73,8 +86,6 @@ def think(irc_line):
     _send("::REPROCESS:" + irc_line)
 
 #command functions
-_command_prefix = "!"
-_commands = {}
 def command(trigger, requireSpace = True):
     trigger = "^" + _command_prefix + trigger
     if requireSpace :
@@ -89,7 +100,6 @@ def set_command_prefix(prefix):
     global _command_prefix
     _command_prefix = prefix
 
-_matches = {}
 def match(trigger):
     def decorator(func):
         _matches[trigger] = func
@@ -106,4 +116,3 @@ starts the plugin in another process
 loads the module
   module loads plugins/__init__.py
 """
-

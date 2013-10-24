@@ -85,8 +85,6 @@ def fire_alias(who, what, where):
             parts = re.split("(%s)" % "|".join(rep_args), rep_str)
             parts[1::2] = [replacement_map[key] for key in parts[1::2]]
             rep_str = "".join(parts)
-
-            print what, "=>", rep_str
             think(":{}! PRIVMSG {} :{}".format(
                 who,
                 where,

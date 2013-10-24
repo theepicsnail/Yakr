@@ -13,6 +13,3 @@ class TestRepeater(PluginTestCase):
 
         self.simulate.say("told", "what?", "#test")
         self.assertEqual(len(self.outputs), 2)
-
-if __name__ == "__main__":
-    main()

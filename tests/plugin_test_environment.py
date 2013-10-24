@@ -1,7 +1,7 @@
 import unittest
 import sys
 import multiprocessing
-
+import yakr.plugin_base
 
 class Simulator(object):
     def __init__(self, callback):
@@ -22,16 +22,16 @@ class PuttableList(list):
 class PluginTestCase(unittest.TestCase):
 
     def __init__(self, *arg, **kwarg):
-        super(PluginTestCase, self).__init__(*arg, **kwarg)
-
         self.outputs = PuttableList()
         self.simulate = Simulator(self.broadcast_to_plugins)
+        super(PluginTestCase, self).__init__(*arg, **kwarg)
 
     def broadcast_to_plugins(self, line):
         if self.loaded_plugin:
             self.loaded_plugin.handle_line(line)
 
     def load_plugin(self, plugin_name):
+        yakr.plugin_base.reset_state()
         plugin_module = __import__("plugins." + plugin_name)
         for sub_module in plugin_name.split("."):
             plugin_module = getattr(plugin_module, sub_module)
