@@ -20,6 +20,10 @@ if len(sys.argv) == 2:
         net = record(conn, "RECORD")
     if sys.argv[1] == "replay":
         net = replay("RECORD")
+    if sys.argv[1] == "test":
+        import unittest
+        unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('tests.plugins'))
+        exit(0)
 else:
     net = simple_connect((connect_host, connect_port))
 
