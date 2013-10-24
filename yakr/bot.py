@@ -18,6 +18,7 @@ class Bot(object):
         self.real_name = "Dot the bot"
         self.plugin_map = {}
         self.output_listeners = []
+        self.running = False
 
     def load(self, plugin_name):
         """ Load a plugin """
@@ -57,9 +58,9 @@ class Bot(object):
         self.net_write.put("NICK " + self.nick)
         self.net_write.put("USER {} localhost localhost :{}"
             .format(self.nick, self.real_name))
-
-        while True:
-            readable, _, _ = select(self.get_readables(), [], [])
+        self.running = True
+        while self.running:
+            readable, _, _ = select(self.get_readables(), [], [], 1)
             for readable_fd in readable:
                 if type(readable_fd) is Plugin:
                     self.handle_plugin_read(readable_fd)
@@ -132,6 +133,7 @@ class Bot(object):
         elif action == "quote":
             self.net_write.put(args)
     def _stop(self):
+        self.running = False
         """Send the stop signal to all of the plugins"""
         for queue in self.plugin_map.values():
             queue.put(None)
