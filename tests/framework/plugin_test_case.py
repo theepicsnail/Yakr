@@ -40,6 +40,7 @@ class PluginTestCase(unittest.TestCase):
         plugin_module.start()
         plugin_module.set_out_queue(self.outputs)
         plugin_module.ready()
+        return plugin_module
 
     def tearDown(self):
         if self.loaded_plugin:

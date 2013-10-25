@@ -11,7 +11,14 @@ def get_reprocess_line(who, what, where):
 
 class TestRepeater(PluginTestCase):
     def setUp(self):
-        self.load_plugin("alias")
+        self.alias_plugin = self.load_plugin("alias")
+        #Clear aliases to get a fresh dict
+        self.alias_plugin._ALIASES={}
+
+    def test_new_nick_saves(self):
+        self.assertFalse("user1" in self.alias_plugin._ALIASES)
+        self.simulate.say("user1", "@test=123", "#test")
+        self.assertTrue("user1" in self.alias_plugin._ALIASES)
 
     def test_simple_alias(self):
         msg = random_message()

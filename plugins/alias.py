@@ -84,6 +84,7 @@ def parse_call(what):
 def handle_assignment(who, assignment):
     aliases = _ALIASES.get(who, {})
     aliases[assignment['name']] = (assignment['args'], assignment['expr'])
+    _ALIASES[who] = aliases
 
 def handle_call(who, where, call):
     replacement = _ALIASES.get(who, {}).get(call["name"], False)
@@ -104,4 +105,3 @@ def handle_call(who, where, call):
         who,
         where,
         rep_str))
-
