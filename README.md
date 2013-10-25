@@ -1,5 +1,6 @@
 Yakr is yet another IRC bot. This one is designed to be very thin, with the same plugability of Superbot and Superbot2.
 
+![Build status](https://travis-ci.org/theepicsnail/Yakr.png)
 ### Starting
 
 To **start** the bot:
