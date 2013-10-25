@@ -29,64 +29,79 @@ def stop():
 
 _ALIAS_RE = re.compile(
     "^"             #START
-    "([a-zA-Z]+)"      #required name (a-z)
-    "(\([a-zA-Z,]+\)|)"#optional arguments "(a,b,c)"
+    "(\w+)"         #required name (a-z)
+    "\s*"
+    "(\([\w,]+\)|)" #optional arguments "(a,b,c)"
     "(=.+|)"        #optional assignment "=some command"
     "(.*?)"         #overflow, only invalid lines put data here
     "$")            #END
 
 @command("", False)
 def fire_alias(who, what, where):
-    #possible 'what's
-    #foo
-    #foo(a,b)
-    #foo=...
-    #foo(a,b)=...
-    
-    match = _ALIAS_RE.match(what)
-    if not match:
-        return
-
-    name, args, assignment, errors = match.groups()
-    #('foo', '', '', '')
-    #('foo', '(a,b)', '', '')
-    #('foo', '', '=...', '')
-    #('foo', '(a,b)', '=...', '')
-    #last group gets a value when parsing failed
-    #"foo(a" => ('foo', ''. ''. '(a')
-    if errors:
-        say(where, "Error parsing {}{{C3}}{}".format(name, errors))
-        return
-
-    if args:
-        args = args[1:-1].split(",")
-    else:
-        args = []
-
+    assignment = parse_assignment(what)
     if assignment:
-        assignment = assignment[1:]
-    else:
-        assignment = None
+        handle_assignment(who, assignment)
+        return
 
-    if assignment is not None:
-        assigned = _ALIASES.get(who, {})
-        assigned[name] = (args, assignment)
-        _ALIASES[who] = assigned
-    else:
-        replacement = _ALIASES.get(who, {}).get(name, False)
-        if replacement:
-            rep_args, rep_str = replacement
-            if len(args) != len(rep_args):
-                say(where, "Argument mismatch. Provided:{}, Expected:{}."
-                    .format(len(args), len(rep_args)))
-                return
-            #Super awesome replace code. 
-            replacement_map = dict(zip(rep_args, args))
-            parts = re.split("(%s)" % "|".join(rep_args), rep_str)
-            parts[1::2] = [replacement_map[key] for key in parts[1::2]]
-            rep_str = "".join(parts)
-            think(":{}! PRIVMSG {} :{}".format(
-                who,
-                where,
-                rep_str))
+    call = parse_call(what)
+    if call:
+        handle_call(who, where, call)
+
+def parse_assignment(what):
+    if "=" not in what:
+        return False
+
+    before, after = what.split("=",1)
+    before = before.strip()
+    after = after.strip()
+
+    name = before
+    args = []
+    if before.endswith(")"):
+        if "(" not in before:
+            return False
+
+        name, arg_str = before[:-1].split("(",1)
+        name = name.strip()
+        args = map(lambda x:x.strip(), arg_str.split(","))
+
+    return {
+        "name": name,
+        "args": args,
+        "expr": after}
+
+def parse_call(what):
+    name = what
+    args = []
+
+    if what.endswith(")"):
+        if "(" not in what:
+            return False
+        name, arg_str = what[:-1].split("(", 1)
+        args = map(lambda x:x.strip(), arg_str.split(","))
+    return {"name": name.strip(), "args": args}
+
+def handle_assignment(who, assignment):
+    aliases = _ALIASES.get(who, {})
+    aliases[assignment['name']] = (assignment['args'], assignment['expr'])
+
+def handle_call(who, where, call):
+    replacement = _ALIASES.get(who, {}).get(call["name"], False)
+    if not replacement:
+        return
+    
+    rep_args, rep_expr = replacement
+    if len(rep_args) != len(call["args"]):
+        say(where, "Argument mismatch. Provided:{}, Expected{}."
+            .format(len(call["args"]), len(rep_args)))
+        return
+
+    replacement_map = dict(zip(rep_args, call["args"]))
+    parts = re.split("(%s)" % "|".join(rep_args), rep_expr)
+    parts[1::2] = [replacement_map[key] for key in parts[1::2]]
+    rep_str = "".join(parts)
+    think(":{}! PRIVMSG {} :{}".format(
+        who,
+        where,
+        rep_str))
 
