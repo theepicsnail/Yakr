@@ -22,8 +22,13 @@ if len(sys.argv) >= 2:
         net = replay("RECORD")
     if sys.argv[1] == "test":
         import unittest
-        unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.discover('tests'))
-        exit(0)
+        result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.discover('tests'))
+        exit_code = 0
+        if result.failures:
+            exit_code += 1
+        if result.errors:
+            exit_code += 2
+        exit(exit_code)
     if sys.argv[1] == "plugin":
         import yakr.plugin_maker
         yakr.plugin_maker.interactive()
