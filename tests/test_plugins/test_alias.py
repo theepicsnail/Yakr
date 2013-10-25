@@ -1,4 +1,4 @@
-from tests.plugin_test_environment import PluginTestCase, main
+from tests.framework.plugin_test_case import PluginTestCase, main
 
 #def reprocess_line(
 class TestRepeater(PluginTestCase):
