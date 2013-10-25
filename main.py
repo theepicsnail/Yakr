@@ -14,7 +14,7 @@ name = config["bot"]["name"]
 
 
 net = None
-if len(sys.argv) == 2:
+if len(sys.argv) >= 2:
     if sys.argv[1] == "record":
         conn = simple_connect((connect_host, connect_port))
         net = record(conn, "RECORD")
@@ -22,7 +22,11 @@ if len(sys.argv) == 2:
         net = replay("RECORD")
     if sys.argv[1] == "test":
         import unittest
-        unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('tests.plugins'))
+        unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.discover('tests'))
+        exit(0)
+    if sys.argv[1] == "plugin":
+        import yakr.plugin_maker
+        yakr.plugin_maker.interactive()
         exit(0)
 else:
     net = simple_connect((connect_host, connect_port))
