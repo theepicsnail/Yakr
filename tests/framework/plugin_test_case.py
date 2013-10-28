@@ -30,17 +30,20 @@ class PluginTestCase(unittest.TestCase):
         if self.loaded_plugin:
             self.loaded_plugin.handle_line(line)
 
-    def load_plugin(self, plugin_name):
+    def load_plugin(self, plugin_name, initialize = True):
         yakr.plugin_base.reset_state()
         plugin_module = __import__("plugins." + plugin_name)
         for sub_module in plugin_name.split("."):
             plugin_module = getattr(plugin_module, sub_module)
         self.loaded_plugin = plugin_module
+        if initialize:
+            self.initialize_plugin(plugin_module)
+        return plugin_module
 
+    def initialize_plugin(self, plugin_module):
         plugin_module.start()
         plugin_module.set_out_queue(self.outputs)
         plugin_module.ready()
-        return plugin_module
 
     def tearDown(self):
         if self.loaded_plugin:

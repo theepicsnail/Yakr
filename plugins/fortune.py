@@ -7,21 +7,36 @@ import re
 _ACTIVITY = set()
 _MIN_WAIT = 10 * 60
 _MAX_WAIT = 60 * 60
+timer = None
+shutdown = False
+FORTUNE_TEMPLATE = "<{C2}Fortune{}> %s"
+RANDOM_FORTUNE_TEMPLATE = "<{C2}Random Fortune{}> %s"
 
 def get_fortune():
     return re.sub("\s+", " ", 
         subprocess.check_output(["fortune", "-s"]))
 
-@command("fortune")
+@command("fortune", False)
 def manual_fortune(who, what, where):
     fortune = get_fortune()
-    say(where, "<{C2}Fortune{}> %s" % fortune)
+    say(where, FORTUNE_TEMPLATE % fortune)
 
 def ready():
     schedule_fortune()
 
+def stop():
+    global shutdown
+    shutdown = True
+    if timer is not None:
+        timer.cancel()
+
 def schedule_fortune():
-    threading.Timer(random.randint(_MIN_WAIT, _MAX_WAIT), random_fortune).start()
+    if shutdown:
+        return
+    global timer
+    delay = random.uniform(_MIN_WAIT, _MAX_WAIT)
+    timer = threading.Timer(delay, random_fortune)
+    timer.start()
 
 def random_fortune():
     global _ACTIVITY
@@ -32,7 +47,7 @@ def random_fortune():
     fortune = get_fortune()
 
     for channel in _ACTIVITY:
-        say(channel, "<{C2}Random Fortune{}> %s" % fortune)
+        say(channel, RANDOM_FORTUNE_TEMPLATE % fortune)
     _ACTIVITY = set()
 
 @privmsg
