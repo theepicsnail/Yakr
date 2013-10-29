@@ -1,5 +1,8 @@
 from yakr.plugin_base import *
 import re
+NO_MATCH_OUTPUT = "Couldn't find anything to match that"
+BAD_EXPRESSION_OUTPUT = "Invalid expression: {}"
+BAD_REGEX_OUTPUT = "Invalid regex: {}"
 
 _SED_COLORS = [4, 7, 3, 10, 6]
 _NUM_COLORS = len(_SED_COLORS)
@@ -49,20 +52,20 @@ def sed(who, what, where):
     while extra:
         match = re.search(_SED_REGEX, extra)
         if not match:
-            say(where, "Invalid sed expression: " + extra)
+            say(where, BAD_EXPRESSION_OUTPUT.format(extra))
             return
         delim, search, replace, opts, extra = match.groups()
 
         search_re = compile_re(search, opts)
 
         if not search_re:
-            say(where, "Invalid regex '%s' :(" % search)
+            say(where, BAD_REGEX_OUTPUT.format(search))
             return
 
         if working_line is None:
             working_line = find_line(search_re)
             if working_line is None:
-                say(where, "Couldn't find anything to match that!")
+                say(where, NO_MATCH_OUTPUT)
                 return
 
         working_line = apply_re(search_re, replace, opts, working_line, color_id)

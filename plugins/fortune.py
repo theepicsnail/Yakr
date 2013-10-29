@@ -16,7 +16,7 @@ def get_fortune():
     return re.sub("\s+", " ", 
         subprocess.check_output(["fortune", "-s"]))
 
-@command("fortune", False)
+@command("fortune")
 def manual_fortune(who, what, where):
     fortune = get_fortune()
     say(where, FORTUNE_TEMPLATE % fortune)
