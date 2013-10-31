@@ -3,15 +3,57 @@ from yakr.util import set_procname
 from yakr.bot import Bot
 import yakr.config as botconfig
 import sys
-set_procname("yakr")
-
+import os
+import re
 config = botconfig.read("yakr.cfg")
 
-connect_host = config["connection"]["host"]
-connect_port = int(config["connection"]["port"])
-nick = config["bot"]["nick"]
-name = config["bot"]["name"]
+set_procname(config.get("bot.process", "yakr"))
 
+blacklist = config.get("plugin.blacklist", "^$").split(" ")
+whitelist = config.get("plugin.whitelist", "^.*$").split(" ")
+def plugin_filter(f):
+    return f.endswith(".py") and not f.startswith("_")
+def passes_white_black_lists(plugin):
+    for regex in whitelist:
+        if re.match(regex, plugin):
+            break
+    else:
+        print "'{}' wasn't on the whitelist".format(plugin)
+        return False
+
+    for regex in blacklist:
+        if re.match(regex, plugin):
+            print "'{}' was on the blacklist (re: '{}')".format(plugin, regex)
+            return False
+    return True
+
+
+plugins = []
+for name, dirs, files in os.walk("plugins"):
+    files = filter(plugin_filter, files)
+    plugin_path = name.split("/")[1:]
+    for f in files:
+        plugin = ".".join(plugin_path+[f[:-3]])
+        
+        if passes_white_black_lists(plugin):
+            plugins.append(plugin)
+print "Detected", len(plugins), "plugin(s)."
+
+
+
+connect_host = config.get("connection.host", False)
+connect_port = config.get("connection.port", False)
+nick = config.get("bot.nick", False)
+name = config.get("bot.name", "Unnamed bot")
+if [connect_host, connect_port, nick].count(False):
+    print "Minimum requirements for a config file:"
+    print "[connection]"
+    print "host = SOME_HOST"
+    print "port = SOME_PORT"
+    print "[bot]"
+    print "nick = SOME_NICK"
+    exit(1)
+connect_port = int(connect_port)
 
 net = None
 if len(sys.argv) >= 2:
@@ -39,31 +81,5 @@ else:
 b = Bot(net)
 b.nick = nick
 b.real_name = name
-plugins = """alias
-alarm
-chance
-colorize
-date
-factor
-fortune
-gayify
-github_reloader
-google.define
-google.search
-google.youtube
-invite
-joiner
-m528
-maths
-numbers
-ping
-repeater
-replacements
-sed
-shortener
-tell
-titles
-twitter
-weather""".split("\n")
 map(b.load, plugins)
 b.run()

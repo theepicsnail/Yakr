@@ -19,13 +19,22 @@ def read(config_file):
 
     turns into
 
-    {"section1": {"foo": "bar"},
-     "section2": {"foo":1, "bar":2}}
+    {
+    #"section1": {"foo": "bar"},
+    #"section2": {"foo":1, "bar":2},
+     "section1.foo": "bar",
+     "section2.foo": 1,
+     "section2.bar": 2
+    }
+
     """
     config = configparser.ConfigParser()
     config.read(config_file)
     out = {}
     for section in config.sections():
-        out[section] = dict(config.items(section))
+#        out[section] = {}
+        for key, value in config.items(section):
+#            out[section][key] = value
+            out[section +"."+key] = value
     del config
     return out
