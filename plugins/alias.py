@@ -93,8 +93,8 @@ def handle_call(who, where, call):
     
     rep_args, rep_expr = replacement
     if len(rep_args) != len(call["args"]):
-        say(where, "Argument mismatch. Provided:{}, Expected{}."
-            .format(len(call["args"]), len(rep_args)))
+        say(where, "Argument mismatch. '{}' expected {} inputs, but got {}."
+            .format(call['name'], len(rep_args), len(call["args"])))
         return
 
     replacement_map = dict(zip(rep_args, call["args"]))
