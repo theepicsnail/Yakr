@@ -15,6 +15,24 @@ class TestRepeater(PluginTestCase):
         #Clear aliases to get a fresh dict
         self.alias_plugin._ALIASES={}
 
+    def test_arg_parser(self):
+        def test_parse(arg_str, expectation):
+            result = self.alias_plugin.parse_call("(" + arg_str +")")
+            if expectation == False:
+                self.assertFalse(result)
+            else:
+                self.assertEqual(expectation, result['args'])
+        test_parse("", [""])
+        test_parse("x", ["x"])
+        test_parse("x,y", ["x", "y"])
+        test_parse("g(x)", ["g(x)"])
+        test_parse("f(g(x))", ["f(g(x))"])
+        test_parse("f(g(x,y))", ["f(g(x,y))"])
+        test_parse("f(g(x,y)),z", ["f(g(x,y))","z"])
+        test_parse(",", ["", ""])
+        
+
+
     def test_new_nick_saves(self):
         self.assertFalse("user1" in self.alias_plugin._ALIASES)
         self.simulate.say("user1", "@test=123", "#test")
@@ -35,6 +53,19 @@ class TestRepeater(PluginTestCase):
         self.simulate.say("user1", "@test(1,2)", "#test")
         self.assertEqual(self.outputs,
             [get_reprocess_line("user1", "1 2 " + msg, "#test")])
+
+    def test_composition(self):
+        msg = random_message()
+        self.simulate.say("user1", "@test(a)=a", "#test")
+        self.simulate.say("user1", "@test2(a,b)=a " + msg, "#test")
+
+        self.simulate.say("user1", "@test(@test2(X, Y))", "#test")
+        self.assertEqual(self.outputs, [get_reprocess_line("user1", "@test2(X, Y)", "#test")])
+        self.outputs.clear()
+
+        #do the reprocessing 
+        self.simulate.say("user1", "@test2(X, Y)", "#test")
+        self.assertEqual(self.outputs, [get_reprocess_line("user1", "X " + msg, "#test")])
 
     def test_formatting(self):
         msg = random_message()

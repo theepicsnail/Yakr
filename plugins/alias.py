@@ -78,7 +78,21 @@ def parse_call(what):
         if "(" not in what:
             return False
         name, arg_str = what[:-1].split("(", 1)
-        args = map(lambda x:x.strip(), arg_str.split(","))
+        cur_arg = ""
+        args = []
+        paren_depth = 0
+        for c in arg_str:
+            if c == "," and paren_depth == 0:
+                args.append(cur_arg.strip())
+                cur_arg = ""
+            else:
+                cur_arg += c
+                if c == "(":
+                    paren_depth += 1
+                if c == ")":
+                    paren_depth -= 1
+        args.append(cur_arg.strip())
+        
     return {"name": name.strip(), "args": args}
 
 def handle_assignment(who, assignment):
