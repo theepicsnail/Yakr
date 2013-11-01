@@ -8,3 +8,5 @@ notifications:
     recipients:
       - theepicsnail@gmail.com
   irc: "udderweb.com:7777#test"
+    template:
+      - "%{author}, %{message}. %{compare_url}"
