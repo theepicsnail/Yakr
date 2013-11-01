@@ -48,7 +48,7 @@ class TestRepeater(PluginTestCase):
         with FakeFortune(self.fortune) as fortune_faker:
             fortune_faker.set_fortune("test")
             self.simulate.say("user", "message", "#test")
-            time.sleep(.1)
+            time.sleep(.2)
             self.assertEqual(self.outputs, ["PRIVMSG #test :" + self.fortune.RANDOM_FORTUNE_TEMPLATE % "test"])
     
 
