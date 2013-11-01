@@ -5,7 +5,8 @@ from thread import start_new_thread
 
 @command("ping")
 def ping(who, what, where):
-     start_new_thread(pinger, (what, where))
+    if what:
+        start_new_thread(pinger, (what, where))
 
 def parse_time(line):
     return float(line.split("=")[-1].split(" ")[0])

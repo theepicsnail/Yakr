@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from tests.framework.plugin_test_case import PluginTestCase, main
 import time
 
