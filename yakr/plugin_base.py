@@ -38,7 +38,7 @@ def handle_line(line):
     process_matches(line)
 
 def process_commands(line):
-    match = re.match("^:(.*)!.*PRIVMSG (.*?) :(.*)", line)
+    match = re.match("^:(.*?)!.*PRIVMSG (.*?) :(.*)", line)
     if match:
         sender, dest, msg = match.groups()
         if dest[0] != "#": #Not a channel, assume it's a pm from sender
