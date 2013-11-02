@@ -2,6 +2,9 @@
 from yakr.plugin_base import *
 import random
 
+def chooser(items):
+    return random.choice(items)
+
 @command("choose")
 def choose(who, what, where):
     say(where, random.choice(what.split(" or ")))
@@ -30,17 +33,22 @@ _MAGIC_8_OUTPUTS = [
 
 @command("8")
 def magic8(who, what, where):
-    say(where, random.choice(_MAGIC_8_OUTPUTS))
+    say(where, chooser(_MAGIC_8_OUTPUTS))
 
+_FLIP_EGGS = {
+    "burger":"{C4}*sizzle*{} Would you like fries with that?",
+    "table": u"(╯{C4}°{}□{C4}°{}）╯{C10}︵ {C7}┻━┻{C10})",
+    "hair": "I WHIP MY HAIR BACK AND FORTH",
+    "flop": ("Heads, definitely. Well, tails is nice, too. "
+             "Yeah, let's go with tails. "
+             "No, heads. Tails. ...which do you like?")
+}
 @command("flip")
 def flip(who, what, where):
-    if "burger" in what:
-        say(where, who + ": {C4}*sizzle*{} Would you like fries with that?")
-    elif "table" in what:
-        say(where, who + u": (╯{C4}°{}□{C4}°{}）╯{C10}︵ {C7}┻━┻{C10})")
-    elif "hair" in what:
-        say(where, who + ": I WHIP MY HAIR BACK AND FORTH")
-    elif "flop" in what:
-        say(where, who + ": Heads, definitely. Well, tails is nice, too. Yeah, let's go with tails. No, heads. Tails. ...which do you like?")
+    msg = who + ": "
+    if what in _FLIP_EGGS:
+        msg += _FLIP_EGGS[what]
     else:
-        say(where, who + ": " + random.choice(["heads", "tails"]))
+        msg += chooser(["heads", "tails"])
+
+    say(where, msg)
