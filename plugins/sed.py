@@ -46,6 +46,9 @@ def apply_re(search_re, replacement, flags, line, color_id):
 
 @command("s", False)#No space after the command "!s_" is enough to trigger this
 def sed(who, what, where):
+    if re.match("[a-zA-Z]", what[0]):
+        return
+
     extra = what
     working_line = None
     color_id = 0
