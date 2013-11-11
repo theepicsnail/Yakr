@@ -3,7 +3,7 @@ import redis
 import random
 import re
 import time
-client = redis.StrictRedis(host='localhost', port=6279, db=12)
+client = redis.StrictRedis(db=12)
 
 def hincrby(src, dst, n):
     p.hincrby(src, dst, n)
