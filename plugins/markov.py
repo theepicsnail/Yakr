@@ -1,33 +1,26 @@
 from yakr.plugin_base import *
 import redis
-import random
 import re
-import time
-client = redis.StrictRedis(db=12)
-
-def hincrby(src, dst, n):
-    p.hincrby(src, dst, n)
-    #assert(False)
-    #t = mock_redis.get(src, {})
-    #v = t.get(dst, "0")
-    #v = str(int(v) + n)
-    #t[dst] = v
-    #t[dst] = v
-    #mock_redis[src]=t
-
-def hgetall(key):
-    resp = client.hgetall(key)
-    #return mock_redis.get(key, {})
-    return resp
-START_CACHE = hgetall("START")
-
-def add_link(src, dst):
-    hincrby(src, dst, 1)
-
+import random
+client = redis.StrictRedis(db=13)
 def tokenize(line):
+    for X in ["%", "!", "http", "<", ">", "[", " ", "Nicks", "Topic"]:
+        if line.startswith(X):
+            return []
+    for X in ["has quit", "has joined", "C0 C1", "now known as", "has changed topic"]:
+        if X in line:
+            return []
+
     words = re.split("\s+", line.strip().lower())
     if len(words) < 4:
         return []
+
+    for X in [
+        "has quit",
+        ]:
+        if X in line:
+            return []
+
     if "--" in words[2]:
         return []
     if "*" in words[2]:
@@ -42,84 +35,151 @@ def add_seed_data(line):
     WORDS_PER_LINK = 3
     if len(chain) < WORDS_PER_LINK+1:
         return
-    start = " ".join(chain[:WORDS_PER_LINK])
-    add_link("START", start)
-    end = " ".join(chain[-WORDS_PER_LINK:])
-    add_link(end, "END")
-    for i in xrange(len(chain)-WORDS_PER_LINK):
+
+    line = " ".join(chain)
+    idx = client.incr("last_idx")
+    client.set(idx, line)
+
+    for i in xrange(len(chain)-WORDS_PER_LINK+1):
         src = " ".join(chain[i:i+WORDS_PER_LINK])
-        add_link(src, chain[i+WORDS_PER_LINK])
+        client.sadd(src, idx)
+    
 
+def reseed():
+    client.flushdb()
+    client.set("first_idx", 0)
+    client.set("last_idx", 0)
 
-def random_next(src):
-    global START_CACHE
-    start_time = time.time()
-    if src == "START":
-        m = START_CACHE
+    for N,line in enumerate(file("markov_seed_data.txt")):
+        add_seed_data(line)
+        if (N+1) % 1000000 == 0:
+            print "Bundled 100,000"
+    print "Done seeding data"
+
+#Utility functions
+def search_for_phrase(search):
+    keys = client.keys(search)
+    if len(keys) == 0:
+        return None
+    return random.choice(keys)
+
+def phrase_to_lineno(phrase):
+    return int(client.srandmember(phrase))
+
+cached = {}
+def lineno_to_line(lineno):
+    if lineno in cached:
+        return cached[lineno]
+    
+    cached_keys = cached.keys()
+    if len(cached_keys) >= 100:
+        del cached[random.choice(cached_keys)]
+
+    line =client.get(lineno)
+    cached[lineno] = line
+
+    return line
+
+def get_adjacent_words_in_line(phrase, line):
+    print "adjacent:"
+    print line
+    print phrase
+    print line.split(phrase)
+    before, after = line.split(phrase,1)
+    if before:
+        before = before.split(" ")[-2]
     else:
-        m = hgetall(src)
-    total = sum(map(int, m.values()))
-    if total == 0:
-        print "Random_next end", time.time()-start_time
-        return "END"
+        before = None
+    if after:
+        after = after.split(" ")[1]
+    else:
+        after = None
+    return before, after
 
-    n = random.randint(0, total-1)
-    for k,v in m.items():
-        v = int(v)
-        if n < v:
-            print "Random_next end", time.time()-start_time
-            return k
-        n -= v
-    return "ERROR"
+def generate_sentence():
+    low_key = int(client.get("first_idx"))
+    high_key = int(client.get("last_idx"))
+    chosen_key = random.randint(low_key, high_key)
+    line = lineno_to_line(chosen_key)
+    parts = line.split(" ")
 
-def generate():
-    #START -> A B
-    #A B -> C
-    #B C -> END
-    word_pair = random_next("START")   #A B
-    word_list = word_pair.split(" ")
-    print "Start:",word_pair
-    sentence = ""
-    while word_list[-1] != "END":                       # B != END   C != END
-        print word_list
-        sentence += word_list[0] +" "
-        word_list.append(random_next(" ".join(word_list)))
-        word_list.pop(0)
-    return sentence + " ".join(word_list[:-1])
+    sentence = parts[:3] #sentence = [first, three, words]
+    linenos = [chosen_key] * 3
+    while True:
+        parts = sentence[-3:]
 
+        phrase = " ".join(parts)
+        new_lineno = phrase_to_lineno(phrase)
+        line = lineno_to_line(new_lineno)
+        _, next_word = get_adjacent_words_in_line(phrase,line)
 
-#@privmsg
-#def record(who, what, where):
-#    add_seed_data(what)
+        if next_word:
+            sentence.append(next_word)
+            linenos.append(int(new_lineno))
+        else:
+            break
+
+    return " ".join(sentence), linenos
+
+def generate_sentence_from(search):
+    phrase = search_for_phrase(search)
+    if phrase is None:
+        return "I didn't find anything with '%s' in it. :(" % word
+    lineno  = phrase_to_lineno(phrase)
+    sentence = phrase.split(" ")
+    linenos = [lineno] * 3
+
+    #work backwards to a start
+    while True:
+        parts = sentence[:3]
+        phrase = " ".join(parts)
+
+        new_lineno = phrase_to_lineno(phrase)
+        line = lineno_to_line(new_lineno)
+        prev_word, _ = get_adjacent_words_in_line(phrase, line)
+
+        if prev_word:
+            sentence.insert(0, prev_word)
+            linenos.insert(0, new_lineno)
+        else:
+            break
+
+    #work forwards to an end
+    while True:
+        parts = sentence[-3:]
+        phrase = " ".join(parts)
+
+        new_lineno = phrase_to_lineno(phrase)
+        line = lineno_to_line(new_lineno)
+        _, next_word = get_adjacent_words_in_line(phrase, line)
+
+        if next_word:
+            sentence.append(next_word)
+            linenos.append(new_lineno)
+        else:
+            break
+
+    return " ".join(sentence), linenos
+
 
 @command("speak")
 def speak(who, what, where):
-    print "Speak triggered at", time.time()
-    m = generate()
-    print "Generation ended at", time.time()
-    say(where, m)
+    w = what.strip()
+    if w:
+        parts = w.split(" ")
+        if len(parts) > 3:
+            say(where, "!speak word [word [word]] - generate a phrase with the provided word(s)")
+            return
+        if len(parts) < 3: 
+            w += " *"
+        if len(parts) < 2:
+            w = "* " + w
+
+        say(where, generate_sentence_from(w)[0])
+    else:
+        say(where, generate_sentence())
 
 @privmsg
 def add_privmsg(who, what, where):
     add_seed_data(what)
-
-def seed_data():
-    #Do your data seeding here.
-    for N,line in enumerate(file("markov_seed_data.txt")):
-        add_seed_data(line)
-        if (N+1) % 100000 == 0:
-            print "Bundled 100,000"
-            p.execute()
-            print "Sent."
-    print "Done seeding data"
-
-if not START_CACHE:
-    print "DB appears to be cleared. Reseeding..."
-    p = client.pipeline()
-    seed_data()
-    p.execute()
-    START_CACHE = hgetall("START")
-
-p = client
-
 
