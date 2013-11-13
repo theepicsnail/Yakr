@@ -118,8 +118,8 @@ def generate_sentence():
             linenos.append(int(new_lineno))
         else:
             break
-
-    return " ".join(sentence), linenos
+    #linenos
+    return " ".join(sentence)
 
 def generate_sentence_from(search):
     phrase = search_for_phrase(search)
@@ -159,7 +159,7 @@ def generate_sentence_from(search):
         else:
             break
 
-    return " ".join(sentence), linenos
+    return " ".join(sentence)#, linenos
 
 
 @command("speak")
@@ -175,7 +175,7 @@ def speak(who, what, where):
         if len(parts) < 2:
             w = "* " + w
 
-        say(where, generate_sentence_from(w)[0])
+        say(where, generate_sentence_from(w))
     else:
         say(where, generate_sentence())
 
