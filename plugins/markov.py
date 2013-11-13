@@ -124,7 +124,7 @@ def generate_sentence():
 def generate_sentence_from(search):
     phrase = search_for_phrase(search)
     if phrase is None:
-        return "I didn't find anything with '%s' in it. :(" % word
+        return "I didn't find anything with '%s' in it. :(" % search
     lineno  = phrase_to_lineno(phrase)
     sentence = phrase.split(" ")
     linenos = [lineno] * 3
