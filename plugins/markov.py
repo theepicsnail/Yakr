@@ -85,7 +85,14 @@ def get_adjacent_words_in_line(phrase, line):
     print line
     print phrase
     print line.split(phrase)
-    before, after = line.split(phrase,1)
+
+    occurances = line.count(phrase)
+    phrase_location = line.find(phrase)
+    for _ in xrange(random.randint(0, occurances-1)):
+        phrase_location = line.find(phrase, phrase_location + 1)
+
+    before = line[:phrase_location]
+    after = line[phrase_location + len(line):]
     if before:
         before = before.split(" ")[-2]
     else:
@@ -118,13 +125,13 @@ def generate_sentence():
             linenos.append(int(new_lineno))
         else:
             break
-    #linenos
-    return " ".join(sentence)
+
+    return " ".join(sentence), linenos
 
 def generate_sentence_from(search):
     phrase = search_for_phrase(search)
     if phrase is None:
-        return "I didn't find anything with '%s' in it. :(" % search,[]
+        return "I didn't find anything with '%s' in it. :(" % search
     lineno  = phrase_to_lineno(phrase)
     sentence = phrase.split(" ")
     linenos = [lineno] * 3
@@ -159,7 +166,7 @@ def generate_sentence_from(search):
         else:
             break
 
-    return " ".join(sentence)#, linenos
+    return " ".join(sentence)
 
 
 @command("speak")
@@ -175,7 +182,7 @@ def speak(who, what, where):
         if len(parts) < 2:
             w = "* " + w
 
-        say(where, generate_sentence_from(w))
+        say(where, generate_sentence_from(w.lower()))
     else:
         say(where, generate_sentence())
 
