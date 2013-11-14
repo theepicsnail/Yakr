@@ -12,3 +12,5 @@ notifications:
       - "udderweb.com:7777#test"
     template:
       - "%{author}, %{message}. %{compare_url}"
+      - "Build details: %{build_url}"
+
