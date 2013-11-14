@@ -81,18 +81,15 @@ def lineno_to_line(lineno):
     return line
 
 def get_adjacent_words_in_line(phrase, line):
-    print "adjacent:"
-    print line
-    print phrase
-    print line.split(phrase)
 
-    occurances = line.count(phrase)
-    phrase_location = line.find(phrase)
-    for _ in xrange(random.randint(0, occurances-1)):
-        phrase_location = line.find(phrase, phrase_location + 1)
+    phrase_locations = []
+    for i in xrange(len(line)):
+        if line[i:].startswith(phrase):
+            phrase_locations.append(i)
+    phrase_location = random.choice(phrase_locations)
 
     before = line[:phrase_location]
-    after = line[phrase_location + len(line):]
+    after = line[phrase_location + len(phrase):]
     if before:
         before = before.split(" ")[-2]
     else:
