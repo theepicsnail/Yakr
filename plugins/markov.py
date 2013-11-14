@@ -126,7 +126,7 @@ def generate_sentence():
         else:
             break
 
-    return " ".join(sentence), linenos
+    return " ".join(sentence)
 
 def generate_sentence_from(search):
     phrase = search_for_phrase(search)
