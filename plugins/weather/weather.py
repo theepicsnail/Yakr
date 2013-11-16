@@ -2,8 +2,11 @@ from yakr.plugin_base import *
 import urllib2
 import json
 
-#Sits next to main.py
-KEY = file("weather_key").read().strip()
+import yakr.config
+
+config = yakr.config.read("plugins/weather/weather.cfg")
+KEY = config.get("wunderground.api_key", None)
+
 
 def get_response(command):
     url = "http://api.wunderground.com/api/%s/%s.json" % (KEY, urllib2.quote(command))
