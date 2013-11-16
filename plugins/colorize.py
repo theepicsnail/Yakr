@@ -15,6 +15,9 @@ def down():
 
 @command("colorize")
 def colorize(who, what, where):
+    if not what:
+        return
+
     global level
     level = 0
     out = colors[0]
