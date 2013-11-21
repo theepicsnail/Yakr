@@ -27,7 +27,10 @@ def set_tell(who, what, where):
     msg_list = TELL_CACHE.get(nick.lower(), [])
     msg_list.append(u"<{}> {}: {}".format(now().strftime("%x %X"), who, msg))
     TELL_CACHE[nick.lower()] = msg_list
-    say(where, who + ": I'll make sure to tell %s next time I see them!" % nick)
+    if msg[-1] == "?":
+        say(where, who + ": I'll make sure to ask %s next time I see them!" % nick)
+    else:
+        say(where, who + ": I'll make sure to tell %s next time I see them!" % nick)
 
 @privmsg
 def check_tell(who, what, where):
