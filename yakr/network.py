@@ -43,7 +43,13 @@ def _run(hostport, read_queue_write_queue, delimiter="\r\n"):
                 [])
             #print readable, writable, exceptioned
             if sock in readable:
-                data = sock.recv(1024).decode("utf-8")
+                data = sock.recv(1024)
+                try:
+                    data = data.decode("utf-8")
+                except:
+                    print("Couldn't decode '{}'\n{}".format(data, map(ord, data)))
+                    continue
+
                 if len(data) == 0:
                     break
                 network_buffer += data
