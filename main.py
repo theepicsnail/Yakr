@@ -34,7 +34,7 @@ for name, dirs, files in os.walk("plugins"):
     plugin_path = name.split("/")[1:]
     for f in files:
         plugin = ".".join(plugin_path+[f[:-3]])
-        
+
         if passes_white_black_lists(plugin):
             plugins.append(plugin)
 print "Detected", len(plugins), "plugin(s)."
@@ -82,4 +82,8 @@ b = Bot(net)
 b.nick = nick
 b.real_name = name
 map(b.load, plugins)
-b.run()
+try:
+    b.run()
+except:
+    b.stop()
+    raise

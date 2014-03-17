@@ -46,7 +46,7 @@ class Bot(object):
         """ Load a plugin, unloading first it if it exists. """
         self.unload(plugin_name)
         return self.load(plugin_name)
-    
+
     def get_readables(self):
         """Get the list of readable queues"""
         # pylint: disable=W0212, C0301
@@ -66,6 +66,7 @@ class Bot(object):
                     self.handle_plugin_read(readable_fd)
                 else:
                     self.handle_net_read()
+        self.stop()
 
     def handle_plugin_read(self, plugin):
         """Handle a plugin that is ready to read"""
@@ -100,7 +101,7 @@ class Bot(object):
         """Handle when the net has data for the bot"""
         data = self.net_read.get()
         if data is None:
-            self._stop()
+            self.running = False
             return
         self.process_net_data(data)
 
@@ -132,11 +133,13 @@ class Bot(object):
                     "Parted by " + who))
         elif action == "quote":
             self.net_write.put(args)
-    def _stop(self):
+    def stop(self):
         self.running = False
         """Send the stop signal to all of the plugins"""
         for queue in self.plugin_map.values():
             queue.put(None)
+        self.net_write.put("QUIT")
+        self.net_write.put(None)
 
     def _ready(self):
         """Send the ready signal to all of the plugins"""
