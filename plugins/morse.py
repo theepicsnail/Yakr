@@ -2,14 +2,14 @@
 # http://morsecode.scphillips.com/i/morse.js
 # and is released availabe Gnu General Public License
 
-#from yakr.plugin_base import *
+from yakr.plugin_base import *
 
-#@command("morse")
+@command("morse")
 def morse(who, what, where):
     # test
-    print(convertPro(what))
-    print(convertPro(convertPro(what)))
-    #say(where, convert(what))
+    # print(convertPro(what))
+    # print(convertPro(convertPro(what)))
+    say(where, convert(what))
 
 def convert(input):
     if isMorse(input):
