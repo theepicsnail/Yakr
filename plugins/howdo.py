@@ -42,7 +42,7 @@ def howdo(who, what, where):
     else:
         if howurl:
             paest = howresp + "\n\nFor more info, check: " + howurl
-            data = urllib.urlencode({'d': howresp})
+            data = urllib.urlencode({'d': paest})
             paestresp = urllib2.urlopen(
                 urllib2.Request("http://a.pae.st", data)
             ).read()
