@@ -44,7 +44,7 @@ def add_fortune(who, what, where):
         strfile_out = subprocess.check_output(["strfile", LOCAL_FORTUNE_FILE])
 
         # How many fortunes do we have now?
-        num_fortunes = re.findall("(\d+) strings", strfile_out)[0]
+        num_fortunes = re.findall("(\d+) string", strfile_out)[0]
         say(where, "%s: Added. Local fortune file now has %s fortunes." % (who, num_fortunes))
 
     else:
