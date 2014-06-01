@@ -17,7 +17,7 @@ def shorten(who, what, where):
     if len(url) <= 18:
         return
     try:
-        content = urllib2.urlopen("http://is.gd/create.php?format=simple&url={}"
+        content = urllib2.urlopen("http://v.gd/create.php?format=simple&url={}"
             .format(urllib.quote(url))).read()
         say(where, "<{C3}Shortened{}: {LINK}%s{} >" % content)
     except urllib2.HTTPError as e:
