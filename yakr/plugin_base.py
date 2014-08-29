@@ -1,5 +1,5 @@
 """ Plugin base
-this provides all the functionality needed for a general plugin. 
+this provides all the functionality needed for a general plugin.
 """
 import re
 
@@ -75,6 +75,11 @@ def say(to, what):
     if type(what) == str:
         what = what.decode("utf-8")
     _send(u"PRIVMSG {} :{}".format(to, what))
+
+def notice(to, what):
+    if type(what) == str:
+        what = what.decode("utf-8")
+    _send(u"NOTICE {} :{}".format(to, what))
 
 def topic(room, text):
     _send("TOPIC " + room +" :" + text.decode('utf-8'))
