@@ -1,6 +1,6 @@
 from yakr.plugin_base import *
 welcome_text = "Welcome to #!. We are a learning and teaching community. In order to maintain a pleasant environment, please refrain from any negative or hateful speech."
-znc_message = "Bitch, yo shit iz flaky as fuuuuuuk. Get a znc for realz."
+znc_message = "You seem to be joining/parting a lot. Please ask one of our admins about a ZNC."
 _CHANNEL="#!"
 diedWithoutTalking = {}
 
