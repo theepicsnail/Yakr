@@ -28,13 +28,13 @@ def save_seen():
 
 @privmsg
 def saw(who, what, where):
-    _SEEN_CACHE[who] = [where, datetime.now()]
+    _SEEN_CACHE[who.lower()] = [where, datetime.now()]
     if _LAST_SAVED < datetime.now() - timedelta(minutes=5):
         save_seen()
 
 @command("seen")
 def seen(who, what, where):
-    target = what
+    target = what.lower()
     if target in _SEEN_CACHE:
         seen_where, seen_when = _SEEN_CACHE[target]
         if seen_where in PUBLIC_ROOMS:
@@ -42,6 +42,6 @@ def seen(who, what, where):
         else:
             seen_chan = ""
 
-        say(where, who + ": I last saw {}{} {}.".format(target, seen_chan, natime(seen_when)))
+        say(where, who + ": I last saw {}{} {}.".format(what, seen_chan, natime(seen_when)))
     else:
         say(where, who + ": I've not seen that person speak yet.")
