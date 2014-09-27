@@ -33,7 +33,7 @@ def title(who, what, where):
     if content.find("</title>") == -1:
         return
     title_content = content.split("</title>")[0].split(">")[-1]
-    title_content = re.sub("[:space:]+", " ", title_content) #clean up whitespace
+    title_content = re.sub("\s+", " ", title_content) #clean up whitespace
 
     title = unescape(title_content)
 
