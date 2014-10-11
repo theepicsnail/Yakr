@@ -14,7 +14,7 @@ def shorten(who, what, where):
         return
 
     url = res.group(0)
-    if len(url) <= 18:
+    if len(url) <= 30:
         return
     try:
         content = urllib2.urlopen("http://v.gd/create.php?format=simple&url={}"
